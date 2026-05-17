@@ -1,9 +1,11 @@
 package com.brayan.asistencia.service;
 
+import com.brayan.asistencia.exception.ApiException;
 import com.brayan.asistencia.model.Asistencia;
 import com.brayan.asistencia.model.Persona;
 import com.brayan.asistencia.repository.AsistenciaRepository;
 import com.brayan.asistencia.repository.PersonaRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -37,13 +39,19 @@ public class AsistenciaService {
         Persona persona = buscarPersona(personaId);
 
         if (!Boolean.TRUE.equals(persona.getRostroRegistrado())) {
-            throw new RuntimeException("La persona no tiene rostro registrado.");
+            throw new ApiException(
+                    HttpStatus.BAD_REQUEST,
+                    "La persona no tiene rostro registrado."
+            );
         }
 
         LocalDate hoy = LocalDate.now();
 
         if (asistenciaRepository.existsByPersonaAndFecha(persona, hoy)) {
-            throw new RuntimeException("La asistencia de esta persona ya fue registrada hoy.");
+            throw new ApiException(
+                    HttpStatus.CONFLICT,
+                    "La asistencia de esta persona ya fue registrada hoy."
+            );
         }
 
         Asistencia asistencia = new Asistencia();
@@ -56,6 +64,9 @@ public class AsistenciaService {
 
     private Persona buscarPersona(Long personaId) {
         return personaRepository.findById(personaId)
-                .orElseThrow(() -> new RuntimeException("Persona no encontrada con ID: " + personaId));
+                .orElseThrow(() -> new ApiException(
+                        HttpStatus.NOT_FOUND,
+                        "Persona no encontrada con ID: " + personaId
+                ));
     }
 }

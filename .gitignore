@@ -1,14 +1,21 @@
-# Java
+# Java / Maven
+backend-java/target/
 target/
 *.class
 *.jar
 *.war
 
 # Python
+facial-service-python/venv/
+venv/
 __pycache__/
 *.pyc
-venv/
+*.pyo
+*.pyd
 .env
+
+# Rostros registrados - no subir fotos reales
+facial-service-python/faces/
 
 # VS Code
 .vscode/
