@@ -1,4 +1,7 @@
 const API_PERSONAS = "http://localhost:8080/api/personas";
+const API_ASISTENCIAS = "http://localhost:8080/api/asistencias";
+const API_FACE_REGISTER = "http://localhost:5001/api/faces/register";
+const API_FACE_RECOGNIZE = "http://localhost:5001/api/faces/recognize";
 
 const menuLinks = document.querySelectorAll(".menu-link");
 const sections = document.querySelectorAll(".page-section");
@@ -31,6 +34,12 @@ const photoPreview = document.getElementById("photoPreview");
 const btnRegistrarRostro = document.getElementById("btnRegistrarRostro");
 const mensajeRostro = document.getElementById("mensajeRostro");
 
+const fotoAsistencia = document.getElementById("fotoAsistencia");
+const btnReconocerPersona = document.getElementById("btnReconocerPersona");
+const mensajeAsistencia = document.getElementById("mensajeAsistencia");
+const previewAsistencia = document.getElementById("previewAsistencia");
+const resultadoReconocimiento = document.getElementById("resultadoReconocimiento");
+
 const btnPerfilRapido = document.getElementById("btnPerfilRapido");
 const formPerfil = document.getElementById("formPerfil");
 const adminNombre = document.getElementById("adminNombre");
@@ -59,6 +68,10 @@ document.addEventListener("DOMContentLoaded", () => {
     cargarPersonas();
 });
 
+/* =========================
+   NAVEGACIÓN
+========================= */
+
 menuLinks.forEach(link => {
     link.addEventListener("click", () => {
         const section = link.dataset.section;
@@ -67,7 +80,11 @@ menuLinks.forEach(link => {
         link.classList.add("active");
 
         sections.forEach(sec => sec.classList.remove("active-section"));
-        document.getElementById(`section-${section}`).classList.add("active-section");
+
+        const sectionElement = document.getElementById(`section-${section}`);
+        if (sectionElement) {
+            sectionElement.classList.add("active-section");
+        }
 
         pageTitle.textContent = pageInfo[section][0];
         pageDescription.textContent = pageInfo[section][1];
@@ -77,6 +94,10 @@ menuLinks.forEach(link => {
 btnPerfilRapido.addEventListener("click", () => {
     document.querySelector('[data-section="perfil"]').click();
 });
+
+/* =========================
+   FORMULARIO DINÁMICO
+========================= */
 
 tipoPersonaRegistro.addEventListener("change", () => {
     const tipo = tipoPersonaRegistro.value;
@@ -89,6 +110,10 @@ tipoPersonaRegistro.addEventListener("change", () => {
         camposDocente.classList.remove("d-none");
     }
 });
+
+/* =========================
+   REGISTRO DE PERSONAS
+========================= */
 
 formPersona.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -117,26 +142,27 @@ formPersona.addEventListener("submit", async (event) => {
     try {
         const response = await fetch(API_PERSONAS, {
             method: "POST",
-            headers: {"Content-Type": "application/json"},
+            headers: {
+                "Content-Type": "application/json"
+            },
             body: JSON.stringify(persona)
         });
 
         if (!response.ok) {
-            throw new Error("API /api/personas aún no disponible. Se guardará temporalmente en el navegador.");
+            throw new Error("No se pudo registrar. Verifica que el DNI no esté repetido.");
         }
 
         mostrarAlerta("Persona registrada correctamente en MySQL.", "success");
+
         formPersona.reset();
+        tipoPersonaRegistro.value = "ESTUDIANTE";
         tipoPersonaRegistro.dispatchEvent(new Event("change"));
-        cargarPersonas();
+
+        await cargarPersonas();
 
     } catch (error) {
-        persona.id = Date.now();
-        guardarPersonaLocal(persona);
-        mostrarAlerta("Persona guardada temporalmente. Luego la conectaremos con /api/personas.", "warning");
-        formPersona.reset();
-        tipoPersonaRegistro.dispatchEvent(new Event("change"));
-        cargarPersonas();
+        mostrarAlerta(error.message, "danger");
+        console.error(error);
     }
 });
 
@@ -146,36 +172,49 @@ filterBtns.forEach(btn => {
     btn.addEventListener("click", () => {
         filterBtns.forEach(item => item.classList.remove("active"));
         btn.classList.add("active");
+
         filtroActual = btn.dataset.filter;
-        renderTabla();
+        renderTablaPersonas();
     });
 });
+
+/* =========================
+   CARGAR PERSONAS
+========================= */
 
 async function cargarPersonas() {
     try {
         const response = await fetch(API_PERSONAS);
 
         if (!response.ok) {
-            throw new Error("API no disponible");
+            throw new Error("No se pudo cargar la lista de personas.");
         }
 
         personas = await response.json();
+
+        renderTablaPersonas();
+        actualizarDashboard();
+        cargarSelectRostro();
+
     } catch (error) {
-        personas = JSON.parse(localStorage.getItem("personasLocal")) || [];
+        personas = [];
+
+        tablaPersonas.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center text-danger py-4">
+                    Error al cargar personas. Verifica que Spring Boot esté encendido.
+                </td>
+            </tr>
+        `;
+
+        actualizarDashboard();
+        cargarSelectRostro();
+
+        console.error(error);
     }
-
-    renderTabla();
-    actualizarDashboard();
-    cargarSelectRostro();
 }
 
-function guardarPersonaLocal(persona) {
-    const data = JSON.parse(localStorage.getItem("personasLocal")) || [];
-    data.push(persona);
-    localStorage.setItem("personasLocal", JSON.stringify(data));
-}
-
-function renderTabla() {
+function renderTablaPersonas() {
     const lista = filtroActual === "TODOS"
         ? personas
         : personas.filter(p => p.tipoPersona === filtroActual);
@@ -194,12 +233,11 @@ function renderTabla() {
     }
 
     lista.forEach(persona => {
-        const detalle = persona.tipoPersona === "ESTUDIANTE"
-            ? `${persona.grado || "Sin grado"} - Sección ${persona.seccion || "-"}`
-            : `${persona.especialidad || "Sin especialidad"} / ${persona.cargo || "Sin cargo"}`;
-
+        const detalle = obtenerDetallePersona(persona);
         const badgeClass = persona.tipoPersona === "ESTUDIANTE" ? "badge-student" : "badge-teacher";
         const tipoTexto = persona.tipoPersona === "ESTUDIANTE" ? "Estudiante" : "Docente";
+
+        const rostroTexto = persona.rostroRegistrado ? "Rostro registrado" : "Sin rostro";
 
         const row = document.createElement("tr");
 
@@ -207,7 +245,7 @@ function renderTabla() {
             <td>${persona.id}</td>
             <td>
                 <div class="person-name">${persona.nombres} ${persona.apellidos}</div>
-                <div class="person-sub">${persona.correo || "Sin correo"}</div>
+                <div class="person-sub">${persona.correo || "Sin correo"} | ${rostroTexto}</div>
             </td>
             <td>${persona.dni}</td>
             <td><span class="badge-custom ${badgeClass}">${tipoTexto}</span></td>
@@ -222,6 +260,10 @@ function renderTabla() {
         tablaPersonas.appendChild(row);
     });
 }
+
+/* =========================
+   DASHBOARD
+========================= */
 
 function actualizarDashboard() {
     const estudiantes = personas.filter(p => p.tipoPersona === "ESTUDIANTE").length;
@@ -243,13 +285,12 @@ function actualizarDashboard() {
         return;
     }
 
-    const gradosEst = (estudiantes / personas.length) * 360;
-    const gradosDoc = 360 - gradosEst;
+    const gradosEstudiantes = (estudiantes / personas.length) * 360;
 
     donutTipoPersona.style.background = `
         conic-gradient(
-            #2563eb 0deg ${gradosEst}deg,
-            #7c3aed ${gradosEst}deg 360deg
+            #2563eb 0deg ${gradosEstudiantes}deg,
+            #7c3aed ${gradosEstudiantes}deg 360deg
         )
     `;
 
@@ -271,6 +312,10 @@ function actualizarDashboard() {
         </div>
     `;
 }
+
+/* =========================
+   REGISTRO DE ROSTRO
+========================= */
 
 function cargarSelectRostro() {
     selectPersonaRostro.innerHTML = `<option value="">Selecciona una persona</option>`;
@@ -298,7 +343,9 @@ fotoRostro.addEventListener("change", () => {
 
     const imageUrl = URL.createObjectURL(file);
 
-    photoPreview.innerHTML = `<img src="${imageUrl}" alt="Vista previa de rostro">`;
+    photoPreview.innerHTML = `
+        <img src="${imageUrl}" alt="Vista previa de rostro">
+    `;
 });
 
 btnRegistrarRostro.addEventListener("click", async () => {
@@ -328,7 +375,7 @@ btnRegistrarRostro.addEventListener("click", async () => {
     formData.append("image", file);
 
     try {
-        const responsePython = await fetch("http://localhost:5001/api/faces/register", {
+        const responsePython = await fetch(API_FACE_REGISTER, {
             method: "POST",
             body: formData
         });
@@ -340,7 +387,7 @@ btnRegistrarRostro.addEventListener("click", async () => {
         }
 
         const responseJava = await fetch(
-            `http://localhost:8080/api/personas/${persona.id}/rostro?rutaRostro=${encodeURIComponent(data.path)}`,
+            `${API_PERSONAS}/${persona.id}/rostro?rutaRostro=${encodeURIComponent(data.path)}`,
             {
                 method: "PATCH"
             }
@@ -357,17 +404,165 @@ btnRegistrarRostro.addEventListener("click", async () => {
 
         await cargarPersonas();
 
-        console.log("Respuesta de Python:", data);
-
     } catch (error) {
-        mostrarMensajeRostro(
-            "Error al guardar rostro: " + error.message,
-            "danger"
-        );
-
-        console.error("Error al enviar rostro:", error);
+        mostrarMensajeRostro("Error al guardar rostro: " + error.message, "danger");
+        console.error(error);
     }
 });
+
+/* =========================
+   ASISTENCIA Y RECONOCIMIENTO
+========================= */
+
+if (fotoAsistencia) {
+    fotoAsistencia.addEventListener("change", () => {
+        const file = fotoAsistencia.files[0];
+
+        if (!file) {
+            previewAsistencia.innerHTML = `
+                <div>
+                    <i class="bi bi-image"></i>
+                    <p>Sin imagen seleccionada</p>
+                </div>
+            `;
+            return;
+        }
+
+        const imageUrl = URL.createObjectURL(file);
+
+        previewAsistencia.innerHTML = `
+            <img src="${imageUrl}" alt="Imagen para reconocimiento">
+        `;
+    });
+}
+
+if (btnReconocerPersona) {
+    btnReconocerPersona.addEventListener("click", async () => {
+        const file = fotoAsistencia.files[0];
+
+        if (!file) {
+            mostrarMensajeAsistencia("Selecciona una imagen para reconocer.", "danger");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("image", file);
+
+        try {
+            mostrarMensajeAsistencia("Analizando rostro, espera un momento...", "primary");
+
+            const responsePython = await fetch(API_FACE_RECOGNIZE, {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await responsePython.json();
+
+            if (!responsePython.ok) {
+                throw new Error(data.message || "No se pudo reconocer la imagen.");
+            }
+
+            if (!data.recognized) {
+                resultadoReconocimiento.innerHTML = `
+                    <div class="recognition-result result-error">
+                        <div class="empty-result">
+                            <i class="bi bi-x-circle-fill text-danger"></i>
+                            <h5>No se reconoció a la persona</h5>
+                            <p>${data.message || "La imagen no coincide con los rostros registrados."}</p>
+                        </div>
+                    </div>
+                `;
+
+                mostrarMensajeAsistencia("No se encontró coincidencia.", "danger");
+                return;
+            }
+
+            const responsePersona = await fetch(`${API_PERSONAS}/${data.personaId}`);
+
+            if (!responsePersona.ok) {
+                throw new Error("Python reconoció la persona, pero Java no encontró sus datos.");
+            }
+
+            const persona = await responsePersona.json();
+
+            let asistenciaMensaje = "";
+
+            try {
+                const responseAsistencia = await fetch(`${API_ASISTENCIAS}/marcar/${persona.id}`, {
+                    method: "POST"
+                });
+
+                const textoRespuesta = await responseAsistencia.text();
+
+                if (!responseAsistencia.ok) {
+                    let mensajeError = "No se pudo registrar la asistencia.";
+
+                    try {
+                        const errorJson = JSON.parse(textoRespuesta);
+                        mensajeError = errorJson.message || mensajeError;
+                    } catch (e) {
+                        mensajeError = textoRespuesta;
+                    }
+
+                    asistenciaMensaje = mensajeError;
+                } else {
+                    const asistencia = JSON.parse(textoRespuesta);
+                    asistenciaMensaje = `Asistencia registrada correctamente. Hora: ${asistencia.hora}`;
+                }
+
+            } catch (errorAsistencia) {
+                asistenciaMensaje = "La persona fue reconocida, pero ocurrió un error al registrar asistencia.";
+                console.error(errorAsistencia);
+            }
+
+            resultadoReconocimiento.innerHTML = `
+                <div class="recognition-result result-success">
+                    <div class="result-person">
+                        <div class="result-icon">
+                            <i class="bi bi-person-check-fill"></i>
+                        </div>
+
+                        <div class="result-data">
+                            <h4>${persona.nombres} ${persona.apellidos}</h4>
+                            <p><strong>Tipo:</strong> ${persona.tipoPersona}</p>
+                            <p><strong>DNI:</strong> ${persona.dni}</p>
+                            <p><strong>Detalle:</strong> ${obtenerDetallePersona(persona)}</p>
+                            <p><strong>Rostro registrado:</strong> ${persona.rostroRegistrado ? "Sí" : "No"}</p>
+                        </div>
+                    </div>
+
+                    <div class="confidence-box">
+                        Coincidencia encontrada | Confianza: ${Number(data.confidence).toFixed(2)}
+                    </div>
+
+                    <div class="confidence-box mt-3">
+                        ${asistenciaMensaje}
+                    </div>
+                </div>
+            `;
+
+            mostrarMensajeAsistencia("Persona reconocida correctamente.", "success");
+
+        } catch (error) {
+            resultadoReconocimiento.innerHTML = `
+                <div class="recognition-result result-error">
+                    <div class="empty-result">
+                        <i class="bi bi-exclamation-triangle-fill text-danger"></i>
+                        <h5>Error en reconocimiento</h5>
+                        <p>${error.message}</p>
+                    </div>
+                </div>
+            `;
+
+            mostrarMensajeAsistencia(error.message, "danger");
+            console.error(error);
+        }
+    });
+}
+
+/* =========================
+   PERFIL ADMIN
+========================= */
 
 formPerfil.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -408,6 +603,10 @@ adminFoto.addEventListener("change", () => {
     adminAvatarGrande.innerHTML = `<img src="${imageUrl}" alt="Foto administrador">`;
 });
 
+/* =========================
+   UTILIDADES
+========================= */
+
 function validarPersona(persona) {
     if (!persona.nombres || !persona.apellidos || !persona.dni) {
         return false;
@@ -424,6 +623,18 @@ function validarPersona(persona) {
     return true;
 }
 
+function obtenerDetallePersona(persona) {
+    if (persona.tipoPersona === "ESTUDIANTE") {
+        return `${persona.grado || "Sin grado"} - Sección ${persona.seccion || "-"}`;
+    }
+
+    if (persona.tipoPersona === "DOCENTE") {
+        return `${persona.especialidad || "Sin especialidad"} / ${persona.cargo || "Sin cargo"}`;
+    }
+
+    return "Sin detalle";
+}
+
 function mostrarAlerta(texto, tipo) {
     globalAlert.className = `alert alert-${tipo}`;
     globalAlert.textContent = texto;
@@ -431,7 +642,7 @@ function mostrarAlerta(texto, tipo) {
 
     setTimeout(() => {
         globalAlert.classList.add("d-none");
-    }, 4200);
+    }, 4500);
 }
 
 function mostrarMensajeRostro(texto, tipo) {
@@ -440,7 +651,16 @@ function mostrarMensajeRostro(texto, tipo) {
 
     setTimeout(() => {
         mensajeRostro.textContent = "";
-    }, 4500);
+    }, 5000);
+}
+
+function mostrarMensajeAsistencia(texto, tipo) {
+    mensajeAsistencia.className = `mt-3 fw-bold text-${tipo}`;
+    mensajeAsistencia.textContent = texto;
+
+    setTimeout(() => {
+        mensajeAsistencia.textContent = "";
+    }, 5000);
 }
 
 function mostrarMensajePerfil(texto, tipo) {
@@ -450,7 +670,7 @@ function mostrarMensajePerfil(texto, tipo) {
 
     setTimeout(() => {
         mensajePerfil.textContent = "";
-    }, 4200);
+    }, 4500);
 }
 
 function obtenerIniciales(nombre) {
