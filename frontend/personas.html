@@ -11,6 +11,50 @@
 </head>
 <body>
 
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" class="login-screen">
+    <div class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <div class="login-logo">
+                    <i class="bi bi-person-bounding-box"></i>
+                </div>
+                <h1>Sistema de Asistencia Facial</h1>
+                <p>Acceso administrativo</p>
+            </div>
+
+            <form id="formLogin" class="login-form">
+                <div class="form-group">
+                    <label for="inputUsername" class="form-label">Usuario</label>
+                    <input type="text" id="inputUsername" class="form-control" placeholder="Ingresa tu usuario" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="inputPassword" class="form-label">Contraseña</label>
+                    <div class="password-input-group">
+                        <input type="password" id="inputPassword" class="form-control" placeholder="Ingresa tu contraseña" required>
+                        <button type="button" class="btn-toggle-password" id="btnTogglePassword">
+                            <i class="bi bi-eye-fill"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="loginError" class="login-error d-none"></div>
+
+                <button type="submit" class="btn btn-login w-100">
+                    <i class="bi bi-lock-fill"></i> Iniciar sesión
+                </button>
+            </form>
+
+            <div class="login-footer">
+                <small>Credenciales de demostración</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- APP PANEL -->
+<div id="appPanel" class="app-panel d-none">
 <div class="app-layout">
 
     <aside class="sidebar">
@@ -64,12 +108,17 @@
                 <p id="pageDescription">Resumen del sistema de asistencia facial.</p>
             </div>
 
-            <div class="admin-mini" id="btnPerfilRapido">
-                <div class="admin-info">
-                    <strong id="adminNombreTop">Brayan Chavez</strong>
-                    <span>Administrador</span>
+            <div class="admin-menu-group">
+                <button class="btn btn-logout" id="btnLogout" title="Cerrar sesión">
+                    <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+                </button>
+                <div class="admin-mini" id="btnPerfilRapido">
+                    <div class="admin-info">
+                        <strong id="adminNombreTop">Brayan Chavez</strong>
+                        <span>Administrador</span>
+                    </div>
+                    <div class="admin-avatar" id="adminAvatarTop">BC</div>
                 </div>
-                <div class="admin-avatar" id="adminAvatarTop">BC</div>
             </div>
         </header>
 
@@ -548,12 +597,17 @@
                         <div class="profile-body">
                             <div class="profile-photo" id="adminAvatarGrande">BC</div>
                             <h3 id="adminNombreVista">Brayan Chavez</h3>
-                            <p>Administrador del sistema</p>
+                            <p class="text-muted" id="adminCargoVista">Administrador del sistema</p>
 
                             <div class="profile-data">
-                                <div><strong>Correo:</strong> <span id="adminCorreoVista">brayanjairchavez981@gmail.com</span></div>
-                                <div><strong>Institución:</strong> Colegio Digital</div>
+                                <div><strong>Correo:</strong> <span id="adminCorreoVista">admin@colegio.edu.pe</span></div>
+                                <div><strong>Institución:</strong> <span id="adminInstitucionVista">Colegio Digital</span></div>
+                                <div><strong>Teléfono:</strong> <span id="adminTelefonoVista">+51 987654321</span></div>
                                 <div><strong>Estado:</strong> <span class="badge text-bg-success">Activo</span></div>
+                            </div>
+
+                            <div class="profile-description mt-3 p-3 bg-light rounded">
+                                <small id="adminDescripcionVista">Bienvenido al panel administrativo del sistema de asistencia facial.</small>
                             </div>
                         </div>
                     </div>
@@ -561,30 +615,55 @@
 
                 <div class="col-lg-8">
                     <div class="glass-card">
-                        <h4>Editar perfil</h4>
-                        <p class="text-muted">Actualiza la información visible del administrador.</p>
+                        <h4>Editar perfil administrativo</h4>
+                        <p class="text-muted">Actualiza la información del administrador del sistema.</p>
 
                         <form id="formPerfil">
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label">Nombre completo</label>
-                                    <input type="text" id="adminNombre" class="form-control" value="Brayan Chavez">
+                                    <input type="text" id="adminNombre" class="form-control" placeholder="Ej. Brayan Chavez" value="Brayan Chavez">
                                 </div>
 
                                 <div class="col-md-6">
                                     <label class="form-label">Correo</label>
-                                    <input type="email" id="adminCorreo" class="form-control" value="brayanjairchavez981@gmail.com">
+                                    <input type="email" id="adminCorreo" class="form-control" placeholder="admin@colegio.edu.pe" value="admin@colegio.edu.pe">
                                 </div>
 
-                                <div class="col-md-12">
+                                <div class="col-md-6">
+                                    <label class="form-label">Institución</label>
+                                    <input type="text" id="adminInstitucion" class="form-control" placeholder="Ej. Colegio Digital" value="Colegio Digital">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Cargo o rol</label>
+                                    <input type="text" id="adminCargo" class="form-control" placeholder="Ej. Administrador" value="Administrador">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Teléfono</label>
+                                    <input type="tel" id="adminTelefono" class="form-control" placeholder="+51 987654321" value="+51 987654321">
+                                </div>
+
+                                <div class="col-md-6">
                                     <label class="form-label">Foto de perfil</label>
                                     <input type="file" id="adminFoto" class="form-control" accept="image/*">
                                 </div>
+
+                                <div class="col-md-12">
+                                    <label class="form-label">Mensaje o descripción</label>
+                                    <textarea id="adminDescripcion" class="form-control" rows="3" placeholder="Ej. Bienvenido al sistema...">Bienvenido al panel administrativo del sistema de asistencia facial.</textarea>
+                                </div>
                             </div>
 
-                            <button class="btn btn-primary-custom mt-4">
-                                <i class="bi bi-check-circle-fill"></i> Guardar cambios
-                            </button>
+                            <div class="button-group-profile mt-4 gap-2">
+                                <button type="submit" class="btn btn-primary-custom flex-grow-1">
+                                    <i class="bi bi-check-circle-fill"></i> Guardar cambios
+                                </button>
+                                <button type="button" class="btn btn-secondary" id="btnRestaurarAdmin">
+                                    <i class="bi bi-arrow-counterclockwise"></i> Restaurar
+                                </button>
+                            </div>
                         </form>
 
                         <div id="mensajePerfil" class="mt-3 fw-bold"></div>
@@ -612,8 +691,10 @@
 
     </main>
 </div>
+</div><!-- cierre de appPanel -->
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/auth-admin.js"></script>
 <script src="js/personas.js"></script>
 </body>
 </html>
