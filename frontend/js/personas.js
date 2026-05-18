@@ -30,6 +30,8 @@ const donutTotalReportes = document.getElementById("donutTotalReportes");
 const leyendaReportes = document.getElementById("leyendaReportes");
 const tablaUltimasAsistencias = document.getElementById("tablaUltimasAsistencias");
 const btnActualizarReportes = document.getElementById("btnActualizarReportes");
+const selectPersonaFalta = document.getElementById("selectPersonaFalta");
+const btnRegistrarFaltaManual = document.getElementById("btnRegistrarFaltaManual");
 
 const donutTipoPersona = document.getElementById("donutTipoPersona");
 const donutTotalPersonas = document.getElementById("donutTotalPersonas");
@@ -75,6 +77,7 @@ const adminAvatarGrande = document.getElementById("adminAvatarGrande");
 
 let personas = [];
 let filtroActual = "TODOS";
+let asistenciasReporteGlobal = [];
 
 const pageInfo = {
     dashboard: ["Dashboard general", "Resumen del sistema de asistencia facial."],
@@ -264,6 +267,7 @@ async function cargarPersonas() {
         renderTablaPersonas();
         actualizarDashboard();
         cargarSelectRostro();
+        cargarSelectPersonaFalta();
 
     } catch (error) {
         personas = [];
@@ -278,6 +282,7 @@ async function cargarPersonas() {
 
         actualizarDashboard();
         cargarSelectRostro();
+        cargarSelectPersonaFalta();
 
         console.error(error);
     }
@@ -716,7 +721,7 @@ if (btnReconocerPersona) {
                     asistenciaMensaje = mensajeError;
                 } else {
                     const asistencia = JSON.parse(textoRespuesta);
-                    asistenciaMensaje = `Asistencia registrada correctamente. Hora: ${asistencia.hora}`;
+                    asistenciaMensaje = `Asistencia registrada correctamente. Estado: ${asistencia.estado}. Hora: ${asistencia.hora}`;
                 }
 
             } catch (errorAsistencia) {
@@ -827,7 +832,8 @@ function renderTablaAsistencias(asistencias) {
         .slice()
         .reverse()
         .forEach(asistencia => {
-            const persona = asistencia.persona;
+            const persona = asistencia.persona || {};
+            const estado = asistencia.estado || "PRESENTE";
 
             const row = document.createElement("tr");
 
@@ -835,22 +841,22 @@ function renderTablaAsistencias(asistencias) {
                 <td>${asistencia.id}</td>
                 <td>
                     <div class="attendance-person">
-                        ${persona.nombres} ${persona.apellidos}
+                        ${persona.nombres || ""} ${persona.apellidos || ""}
                     </div>
                     <div class="attendance-sub">
-                        DNI: ${persona.dni}
+                        DNI: ${persona.dni || "-"}
                     </div>
                 </td>
                 <td>
                     <span class="badge-custom ${persona.tipoPersona === "ESTUDIANTE" ? "badge-student" : "badge-teacher"}">
-                        ${persona.tipoPersona}
+                        ${persona.tipoPersona || "SIN TIPO"}
                     </span>
                 </td>
                 <td>${asistencia.fecha}</td>
                 <td>${asistencia.hora}</td>
                 <td>
-                    <span class="badge-present">
-                        ${asistencia.estado}
+                    <span class="${obtenerClaseEstado(estado)}">
+                        ${estado}
                     </span>
                 </td>
                 <td>
@@ -865,10 +871,68 @@ function renderTablaAsistencias(asistencias) {
 }
 
 /* =========================
-   REPORTES
+   REGISTRO MANUAL DE FALTA
 ========================= */
 
-let asistenciasReporteGlobal = [];
+function cargarSelectPersonaFalta() {
+    if (!selectPersonaFalta) {
+        return;
+    }
+
+    selectPersonaFalta.innerHTML = `<option value="">Selecciona una persona</option>`;
+
+    personas.forEach(persona => {
+        const option = document.createElement("option");
+        option.value = persona.id;
+        option.textContent = `${persona.nombres} ${persona.apellidos} - ${persona.tipoPersona}`;
+        selectPersonaFalta.appendChild(option);
+    });
+}
+
+if (btnRegistrarFaltaManual) {
+    btnRegistrarFaltaManual.addEventListener("click", async () => {
+        const personaId = selectPersonaFalta.value;
+
+        if (!personaId) {
+            mostrarMensajeAccionAsistencia("Selecciona una persona para registrar falta.", "danger");
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_ASISTENCIAS}/falta/${personaId}`, {
+                method: "POST"
+            });
+
+            const textoRespuesta = await response.text();
+
+            if (!response.ok) {
+                let mensajeError = "No se pudo registrar la falta.";
+
+                try {
+                    const errorJson = JSON.parse(textoRespuesta);
+                    mensajeError = errorJson.message || mensajeError;
+                } catch (e) {
+                    mensajeError = textoRespuesta;
+                }
+
+                throw new Error(mensajeError);
+            }
+
+            mostrarMensajeAccionAsistencia("Falta registrada correctamente.", "success");
+
+            await cargarAsistencias();
+            await cargarReportes();
+
+        } catch (error) {
+            mostrarMensajeAccionAsistencia(error.message, "danger");
+            console.error(error);
+        }
+    });
+}
+
+/* =========================
+   REPORTES
+========================= */
 
 async function cargarReportes() {
     const tablaReportes = document.getElementById("tablaUltimasAsistencias");
@@ -895,7 +959,7 @@ async function cargarReportes() {
         if (tablaUltimasAsistencias) {
             tablaUltimasAsistencias.innerHTML = `
                 <tr>
-                    <td colspan="6" class="text-center text-danger py-4">
+                    <td colspan="7" class="text-center text-danger py-4">
                         Error al cargar reportes. Verifica que Spring Boot esté encendido.
                     </td>
                 </tr>
@@ -905,14 +969,29 @@ async function cargarReportes() {
 }
 
 function prepararFiltrosReportes() {
-    const filtroFecha = document.getElementById("filtroFechaReporte");
+    const filtroFechaInicio = document.getElementById("filtroFechaInicioReporte");
+    const filtroFechaFin = document.getElementById("filtroFechaFinReporte");
+    const filtroTipo = document.getElementById("filtroTipoReporte");
+    const filtroEstado = document.getElementById("filtroEstadoReporte");
     const btnFiltrar = document.getElementById("btnFiltrarReportes");
     const btnLimpiar = document.getElementById("btnLimpiarReportes");
     const btnExcel = document.getElementById("btnExportarExcel");
     const btnPDF = document.getElementById("btnImprimirPDF");
 
-    if (filtroFecha && !filtroFecha.value) {
-        filtroFecha.value = obtenerFechaActual();
+    if (filtroFechaInicio && !filtroFechaInicio.value) {
+        filtroFechaInicio.value = obtenerFechaActual();
+    }
+
+    if (filtroFechaFin && !filtroFechaFin.value) {
+        filtroFechaFin.value = obtenerFechaActual();
+    }
+
+    if (filtroTipo && !filtroTipo.value) {
+        filtroTipo.value = "TODOS";
+    }
+
+    if (filtroEstado && !filtroEstado.value) {
+        filtroEstado.value = "TODOS";
     }
 
     if (btnFiltrar && !btnFiltrar.dataset.listener) {
@@ -922,10 +1001,10 @@ function prepararFiltrosReportes() {
 
     if (btnLimpiar && !btnLimpiar.dataset.listener) {
         btnLimpiar.addEventListener("click", () => {
-            const filtroTipo = document.getElementById("filtroTipoReporte");
-
-            if (filtroFecha) filtroFecha.value = "";
+            if (filtroFechaInicio) filtroFechaInicio.value = "";
+            if (filtroFechaFin) filtroFechaFin.value = "";
             if (filtroTipo) filtroTipo.value = "TODOS";
+            if (filtroEstado) filtroEstado.value = "TODOS";
 
             aplicarFiltrosReportes();
         });
@@ -945,21 +1024,40 @@ function prepararFiltrosReportes() {
 }
 
 function obtenerAsistenciasFiltradas() {
-    const filtroFecha = document.getElementById("filtroFechaReporte");
+    const filtroFechaInicio = document.getElementById("filtroFechaInicioReporte");
+    const filtroFechaFin = document.getElementById("filtroFechaFinReporte");
     const filtroTipo = document.getElementById("filtroTipoReporte");
+    const filtroEstado = document.getElementById("filtroEstadoReporte");
 
-    const fechaSeleccionada = filtroFecha ? filtroFecha.value : "";
+    const fechaInicio = filtroFechaInicio ? filtroFechaInicio.value : "";
+    const fechaFin = filtroFechaFin ? filtroFechaFin.value : "";
     const tipoSeleccionado = filtroTipo ? filtroTipo.value : "TODOS";
+    const estadoSeleccionado = filtroEstado ? filtroEstado.value : "TODOS";
 
     return asistenciasReporteGlobal.filter(asistencia => {
-        const coincideFecha = !fechaSeleccionada || asistencia.fecha === fechaSeleccionada;
-        const coincideTipo = tipoSeleccionado === "TODOS" || asistencia.persona?.tipoPersona === tipoSeleccionado;
+        const fechaAsistencia = asistencia.fecha;
 
-        return coincideFecha && coincideTipo;
+        const coincideFechaInicio = !fechaInicio || fechaAsistencia >= fechaInicio;
+        const coincideFechaFin = !fechaFin || fechaAsistencia <= fechaFin;
+        const coincideTipo = tipoSeleccionado === "TODOS" || asistencia.persona?.tipoPersona === tipoSeleccionado;
+        const coincideEstado = estadoSeleccionado === "TODOS" || asistencia.estado === estadoSeleccionado;
+
+        return coincideFechaInicio && coincideFechaFin && coincideTipo && coincideEstado;
     });
 }
 
 function aplicarFiltrosReportes() {
+    const filtroFechaInicio = document.getElementById("filtroFechaInicioReporte");
+    const filtroFechaFin = document.getElementById("filtroFechaFinReporte");
+
+    const fechaInicio = filtroFechaInicio ? filtroFechaInicio.value : "";
+    const fechaFin = filtroFechaFin ? filtroFechaFin.value : "";
+
+    if (fechaInicio && fechaFin && fechaInicio > fechaFin) {
+        mostrarMensajeReporte("La fecha inicio no puede ser mayor que la fecha fin.");
+        return;
+    }
+
     const asistenciasFiltradas = obtenerAsistenciasFiltradas();
 
     actualizarReportes(asistenciasFiltradas);
@@ -1029,7 +1127,7 @@ function renderUltimasAsistencias(asistencias) {
     if (asistencias.length === 0) {
         tablaUltimasAsistencias.innerHTML = `
             <tr>
-                <td colspan="6" class="text-center text-muted py-4">
+                <td colspan="7" class="text-center text-muted py-4">
                     No hay asistencias para mostrar.
                 </td>
             </tr>
@@ -1042,6 +1140,7 @@ function renderUltimasAsistencias(asistencias) {
         .reverse()
         .forEach(asistencia => {
             const persona = asistencia.persona || {};
+            const estado = asistencia.estado || "PRESENTE";
 
             const row = document.createElement("tr");
 
@@ -1072,14 +1171,70 @@ function renderUltimasAsistencias(asistencias) {
                 <td>${asistencia.hora}</td>
 
                 <td>
-                    <span class="badge-present">
-                        ${asistencia.estado}
+                    <span class="${obtenerClaseEstado(estado)}">
+                        ${estado}
                     </span>
+                </td>
+
+                <td>
+                    <div class="estado-actions">
+                        <select class="form-select form-select-sm" id="estado-${asistencia.id}">
+                            <option value="PRESENTE" ${estado === "PRESENTE" ? "selected" : ""}>Presente</option>
+                            <option value="TARDANZA" ${estado === "TARDANZA" ? "selected" : ""}>Tardanza</option>
+                            <option value="FALTA" ${estado === "FALTA" ? "selected" : ""}>Falta</option>
+                            <option value="JUSTIFICADO" ${estado === "JUSTIFICADO" ? "selected" : ""}>Justificado</option>
+                        </select>
+
+                        <button class="btn btn-light-custom btn-sm" onclick="actualizarEstadoAsistencia(${asistencia.id})">
+                            Guardar
+                        </button>
+                    </div>
                 </td>
             `;
 
             tablaUltimasAsistencias.appendChild(row);
         });
+}
+
+async function actualizarEstadoAsistencia(asistenciaId) {
+    const selectEstado = document.getElementById(`estado-${asistenciaId}`);
+
+    if (!selectEstado) {
+        mostrarMensajeAccionAsistencia("No se encontró el selector de estado.", "danger");
+        return;
+    }
+
+    const nuevoEstado = selectEstado.value;
+
+    try {
+        const response = await fetch(`${API_ASISTENCIAS}/${asistenciaId}/estado?estado=${nuevoEstado}`, {
+            method: "PATCH"
+        });
+
+        const textoRespuesta = await response.text();
+
+        if (!response.ok) {
+            let mensajeError = "No se pudo actualizar el estado.";
+
+            try {
+                const errorJson = JSON.parse(textoRespuesta);
+                mensajeError = errorJson.message || mensajeError;
+            } catch (e) {
+                mensajeError = textoRespuesta;
+            }
+
+            throw new Error(mensajeError);
+        }
+
+        mostrarMensajeAccionAsistencia(`Estado actualizado a ${nuevoEstado}.`, "success");
+
+        await cargarAsistencias();
+        await cargarReportes();
+
+    } catch (error) {
+        mostrarMensajeAccionAsistencia(error.message, "danger");
+        console.error(error);
+    }
 }
 
 function exportarReporteExcel() {
@@ -1133,8 +1288,10 @@ function imprimirReportePDF() {
         return;
     }
 
-    const filtroFecha = document.getElementById("filtroFechaReporte")?.value || "Todas";
+    const fechaInicio = document.getElementById("filtroFechaInicioReporte")?.value || "Todas";
+    const fechaFin = document.getElementById("filtroFechaFinReporte")?.value || "Todas";
     const filtroTipo = document.getElementById("filtroTipoReporte")?.value || "TODOS";
+    const filtroEstado = document.getElementById("filtroEstadoReporte")?.value || "TODOS";
 
     let filas = "";
 
@@ -1224,8 +1381,10 @@ function imprimirReportePDF() {
             <p class="subtitle">Sistema de Asistencia Facial</p>
 
             <div class="info">
-                <strong>Fecha filtrada:</strong> ${filtroFecha}<br>
+                <strong>Fecha inicio:</strong> ${fechaInicio}<br>
+                <strong>Fecha fin:</strong> ${fechaFin}<br>
                 <strong>Tipo filtrado:</strong> ${filtroTipo}<br>
+                <strong>Estado filtrado:</strong> ${filtroEstado}<br>
                 <strong>Total registros:</strong> ${asistenciasFiltradas.length}
             </div>
 
@@ -1270,20 +1429,6 @@ function limpiarCSV(valor) {
     return `"${texto}"`;
 }
 
-function mostrarMensajeReporte(mensaje) {
-    const mensajeReporte = document.getElementById("mensajeReporte");
-
-    if (!mensajeReporte) {
-        return;
-    }
-
-    mensajeReporte.textContent = mensaje;
-
-    setTimeout(() => {
-        mensajeReporte.textContent = "";
-    }, 4000);
-}
-
 /* =========================
    UTILIDADES
 ========================= */
@@ -1325,6 +1470,26 @@ function obtenerFechaActual() {
     return `${year}-${month}-${day}`;
 }
 
+function obtenerClaseEstado(estado) {
+    if (estado === "PRESENTE") {
+        return "badge-present";
+    }
+
+    if (estado === "TARDANZA") {
+        return "badge-tardanza";
+    }
+
+    if (estado === "FALTA") {
+        return "badge-falta";
+    }
+
+    if (estado === "JUSTIFICADO") {
+        return "badge-justificado";
+    }
+
+    return "badge-method";
+}
+
 function mostrarAlerta(texto, tipo) {
     if (!globalAlert) {
         return;
@@ -1363,6 +1528,36 @@ function mostrarMensajeAsistencia(texto, tipo) {
     setTimeout(() => {
         mensajeAsistencia.textContent = "";
     }, 5000);
+}
+
+function mostrarMensajeReporte(mensaje) {
+    const mensajeReporte = document.getElementById("mensajeReporte");
+
+    if (!mensajeReporte) {
+        return;
+    }
+
+    mensajeReporte.className = "mt-3 fw-bold text-primary";
+    mensajeReporte.textContent = mensaje;
+
+    setTimeout(() => {
+        mensajeReporte.textContent = "";
+    }, 4000);
+}
+
+function mostrarMensajeAccionAsistencia(mensaje, tipo) {
+    const mensajeAccion = document.getElementById("mensajeAccionAsistencia") || document.getElementById("mensajeReporte");
+
+    if (!mensajeAccion) {
+        return;
+    }
+
+    mensajeAccion.className = `mt-3 fw-bold text-${tipo}`;
+    mensajeAccion.textContent = mensaje;
+
+    setTimeout(() => {
+        mensajeAccion.textContent = "";
+    }, 4000);
 }
 
 function obtenerIniciales(nombre) {

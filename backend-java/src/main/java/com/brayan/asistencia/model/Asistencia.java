@@ -13,23 +13,21 @@ public class Asistencia {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "persona_id")
-    private Persona persona;
-
-    @Column(nullable = false)
     private LocalDate fecha;
 
-    @Column(nullable = false)
     private LocalTime hora;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String estado;
+    private EstadoAsistencia estado;
 
-    @Column(nullable = false)
     private String metodoRegistro;
 
     private LocalDateTime fechaRegistro;
+
+    @ManyToOne
+    @JoinColumn(name = "persona_id", nullable = false)
+    private Persona persona;
 
     public Asistencia() {
     }
@@ -47,11 +45,7 @@ public class Asistencia {
         }
 
         if (this.estado == null) {
-            this.estado = "PRESENTE";
-        }
-
-        if (this.metodoRegistro == null) {
-            this.metodoRegistro = "RECONOCIMIENTO_FACIAL";
+            this.estado = EstadoAsistencia.PRESENTE;
         }
     }
 
@@ -59,27 +53,27 @@ public class Asistencia {
         return id;
     }
 
-    public Persona getPersona() {
-        return persona;
-    }
-
-    public void setPersona(Persona persona) {
-        this.persona = persona;
-    }
-
     public LocalDate getFecha() {
         return fecha;
+    }
+
+    public void setFecha(LocalDate fecha) {
+        this.fecha = fecha;
     }
 
     public LocalTime getHora() {
         return hora;
     }
 
-    public String getEstado() {
+    public void setHora(LocalTime hora) {
+        this.hora = hora;
+    }
+
+    public EstadoAsistencia getEstado() {
         return estado;
     }
 
-    public void setEstado(String estado) {
+    public void setEstado(EstadoAsistencia estado) {
         this.estado = estado;
     }
 
@@ -93,5 +87,13 @@ public class Asistencia {
 
     public LocalDateTime getFechaRegistro() {
         return fechaRegistro;
+    }
+
+    public Persona getPersona() {
+        return persona;
+    }
+
+    public void setPersona(Persona persona) {
+        this.persona = persona;
     }
 }
