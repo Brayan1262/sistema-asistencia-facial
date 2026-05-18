@@ -15,6 +15,10 @@ const camposEstudiante = document.getElementById("camposEstudiante");
 const camposDocente = document.getElementById("camposDocente");
 const tablaPersonas = document.getElementById("tablaPersonas");
 const btnActualizarPersonas = document.getElementById("btnActualizarPersonas");
+const btnGuardarPersona = document.getElementById("btnGuardarPersona");
+const btnCancelarEdicionPersona = document.getElementById("btnCancelarEdicionPersona");
+const tituloFormularioPersona = document.getElementById("tituloFormularioPersona");
+const descripcionFormularioPersona = document.getElementById("descripcionFormularioPersona");
 const filterBtns = document.querySelectorAll(".filter-btn");
 
 const totalPersonas = document.getElementById("totalPersonas");
@@ -78,6 +82,8 @@ const adminAvatarGrande = document.getElementById("adminAvatarGrande");
 let personas = [];
 let filtroActual = "TODOS";
 let asistenciasReporteGlobal = [];
+let personaEditandoId = null;
+let estadoPersonaEditando = true;
 
 const pageInfo = {
     dashboard: ["Dashboard general", "Resumen del sistema de asistencia facial."],
@@ -159,7 +165,7 @@ if (tipoPersonaRegistro) {
 }
 
 /* =========================
-   REGISTRO DE PERSONAS
+   REGISTRO / EDICIÓN DE PERSONAS
 ========================= */
 
 if (formPersona) {
@@ -179,7 +185,7 @@ if (formPersona) {
             seccion: tipo === "ESTUDIANTE" ? document.getElementById("seccion").value.trim() : "",
             especialidad: tipo === "DOCENTE" ? document.getElementById("especialidad").value.trim() : "",
             cargo: tipo === "DOCENTE" ? document.getElementById("cargo").value.trim() : "",
-            estado: true
+            estado: personaEditandoId ? estadoPersonaEditando : true
         };
 
         if (!validarPersona(persona)) {
@@ -188,8 +194,14 @@ if (formPersona) {
         }
 
         try {
-            const response = await fetch(API_PERSONAS, {
-                method: "POST",
+            const url = personaEditandoId
+                ? `${API_PERSONAS}/${personaEditandoId}`
+                : API_PERSONAS;
+
+            const metodo = personaEditandoId ? "PUT" : "POST";
+
+            const response = await fetch(url, {
+                method: metodo,
                 headers: {
                     "Content-Type": "application/json"
                 },
@@ -198,7 +210,9 @@ if (formPersona) {
 
             if (!response.ok) {
                 const errorText = await response.text();
-                let message = "No se pudo registrar. Verifica que el DNI no esté repetido.";
+                let message = personaEditandoId
+                    ? "No se pudo actualizar la persona."
+                    : "No se pudo registrar. Verifica que el DNI no esté repetido.";
 
                 try {
                     const errorJson = JSON.parse(errorText);
@@ -208,11 +222,17 @@ if (formPersona) {
                 throw new Error(message);
             }
 
-            mostrarAlerta("Persona registrada correctamente en MySQL.", "success");
+            mostrarAlerta(
+                personaEditandoId
+                    ? "Persona actualizada correctamente."
+                    : "Persona registrada correctamente en MySQL.",
+                "success"
+            );
 
             formPersona.reset();
             tipoPersonaRegistro.value = "ESTUDIANTE";
             tipoPersonaRegistro.dispatchEvent(new Event("change"));
+            cancelarEdicionPersona(false);
 
             await cargarPersonas();
             await cargarReportes();
@@ -221,6 +241,12 @@ if (formPersona) {
             mostrarAlerta(error.message, "danger");
             console.error(error);
         }
+    });
+}
+
+if (btnCancelarEdicionPersona) {
+    btnCancelarEdicionPersona.addEventListener("click", () => {
+        cancelarEdicionPersona(true);
     });
 }
 
@@ -274,7 +300,7 @@ async function cargarPersonas() {
 
         tablaPersonas.innerHTML = `
             <tr>
-                <td colspan="6" class="text-center text-danger py-4">
+                <td colspan="7" class="text-center text-danger py-4">
                     Error al cargar personas. Verifica que Spring Boot esté encendido.
                 </td>
             </tr>
@@ -302,7 +328,7 @@ function renderTablaPersonas() {
     if (lista.length === 0) {
         tablaPersonas.innerHTML = `
             <tr>
-                <td colspan="6" class="text-center text-muted py-4">
+                <td colspan="7" class="text-center text-muted py-4">
                     No hay personas registradas para este filtro.
                 </td>
             </tr>
@@ -328,14 +354,175 @@ function renderTablaPersonas() {
             <td><span class="badge-custom ${badgeClass}">${tipoTexto}</span></td>
             <td>${detalle}</td>
             <td>
-                <span class="badge text-bg-success">
+                <span class="badge ${persona.estado ? "text-bg-success" : "text-bg-secondary"}">
                     ${persona.estado ? "Activo" : "Inactivo"}
                 </span>
+            </td>
+            <td>
+                <div class="d-flex gap-2 flex-wrap">
+                    <button class="btn btn-sm btn-light-custom" onclick="editarPersona(${persona.id})">
+                        <i class="bi bi-pencil-square"></i> Editar
+                    </button>
+
+                    <button class="btn btn-sm ${persona.estado ? "btn-outline-danger" : "btn-outline-success"}" onclick="cambiarEstadoPersona(${persona.id})">
+                        <i class="bi ${persona.estado ? "bi-person-x-fill" : "bi-person-check-fill"}"></i>
+                        ${persona.estado ? "Desactivar" : "Activar"}
+                    </button>
+                </div>
             </td>
         `;
 
         tablaPersonas.appendChild(row);
     });
+}
+
+function editarPersona(personaId) {
+    const persona = personas.find(p => Number(p.id) === Number(personaId));
+
+    if (!persona) {
+        mostrarAlerta("No se encontró la persona seleccionada.", "danger");
+        return;
+    }
+
+    personaEditandoId = persona.id;
+    estadoPersonaEditando = persona.estado;
+
+    document.getElementById("nombres").value = persona.nombres || "";
+    document.getElementById("apellidos").value = persona.apellidos || "";
+    document.getElementById("dni").value = persona.dni || "";
+    document.getElementById("correo").value = persona.correo || "";
+    document.getElementById("telefono").value = persona.telefono || "";
+
+    tipoPersonaRegistro.value = persona.tipoPersona || "ESTUDIANTE";
+    tipoPersonaRegistro.dispatchEvent(new Event("change"));
+
+    if (persona.tipoPersona === "ESTUDIANTE") {
+        document.getElementById("grado").value = persona.grado || "";
+        document.getElementById("seccion").value = persona.seccion || "";
+    }
+
+    if (persona.tipoPersona === "DOCENTE") {
+        document.getElementById("especialidad").value = persona.especialidad || "";
+        document.getElementById("cargo").value = persona.cargo || "";
+    }
+
+    if (btnGuardarPersona) {
+        btnGuardarPersona.innerHTML = `<i class="bi bi-save-fill"></i> Guardar cambios`;
+    }
+
+    if (btnCancelarEdicionPersona) {
+        btnCancelarEdicionPersona.classList.remove("d-none");
+    }
+
+    if (tituloFormularioPersona) {
+        tituloFormularioPersona.textContent = "Editar persona";
+    }
+
+    if (descripcionFormularioPersona) {
+        descripcionFormularioPersona.textContent = "Modifica los datos de la persona seleccionada.";
+    }
+
+    mostrarAlerta(`Editando a ${persona.nombres} ${persona.apellidos}. Modifica los datos y guarda.`, "primary");
+
+    const seccionPersonas = document.getElementById("section-personas");
+
+    if (seccionPersonas) {
+        seccionPersonas.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+}
+
+function cancelarEdicionPersona(mostrarMensaje = true) {
+    personaEditandoId = null;
+    estadoPersonaEditando = true;
+
+    if (btnGuardarPersona) {
+        btnGuardarPersona.innerHTML = `<i class="bi bi-save-fill"></i> Registrar persona`;
+    }
+
+    if (btnCancelarEdicionPersona) {
+        btnCancelarEdicionPersona.classList.add("d-none");
+    }
+
+    if (tituloFormularioPersona) {
+        tituloFormularioPersona.textContent = "Registrar persona";
+    }
+
+    if (descripcionFormularioPersona) {
+        descripcionFormularioPersona.textContent = "Registra estudiantes o docentes desde un solo formulario.";
+    }
+
+    if (mostrarMensaje) {
+        formPersona.reset();
+        tipoPersonaRegistro.value = "ESTUDIANTE";
+        tipoPersonaRegistro.dispatchEvent(new Event("change"));
+        mostrarAlerta("Edición cancelada.", "info");
+    }
+}
+
+async function cambiarEstadoPersona(personaId) {
+    const persona = personas.find(p => Number(p.id) === Number(personaId));
+
+    if (!persona) {
+        mostrarAlerta("No se encontró la persona seleccionada.", "danger");
+        return;
+    }
+
+    const nuevoEstado = !persona.estado;
+    const accion = nuevoEstado ? "activar" : "desactivar";
+
+    if (!confirm(`¿Seguro que deseas ${accion} a ${persona.nombres} ${persona.apellidos}?`)) {
+        return;
+    }
+
+    const personaActualizada = {
+        nombres: persona.nombres,
+        apellidos: persona.apellidos,
+        dni: persona.dni,
+        correo: persona.correo,
+        telefono: persona.telefono,
+        tipoPersona: persona.tipoPersona,
+        grado: persona.grado,
+        seccion: persona.seccion,
+        especialidad: persona.especialidad,
+        cargo: persona.cargo,
+        estado: nuevoEstado
+    };
+
+    try {
+        const response = await fetch(`${API_PERSONAS}/${persona.id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(personaActualizada)
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            let message = "No se pudo actualizar el estado de la persona.";
+
+            try {
+                const errorJson = JSON.parse(errorText);
+                message = errorJson.message || message;
+            } catch (e) {}
+
+            throw new Error(message);
+        }
+
+        mostrarAlerta(
+            nuevoEstado
+                ? "Persona activada correctamente."
+                : "Persona desactivada correctamente.",
+            "success"
+        );
+
+        await cargarPersonas();
+        await cargarReportes();
+
+    } catch (error) {
+        mostrarAlerta(error.message, "danger");
+        console.error(error);
+    }
 }
 
 /* =========================
@@ -450,6 +637,11 @@ if (btnRegistrarRostro) {
 
         if (!persona) {
             mostrarMensajeRostro("No se encontró la persona seleccionada.", "danger");
+            return;
+        }
+
+        if (!persona.estado) {
+            mostrarMensajeRostro("No puedes registrar rostro a una persona inactiva.", "danger");
             return;
         }
 
@@ -701,32 +893,36 @@ if (btnReconocerPersona) {
 
             let asistenciaMensaje = "";
 
-            try {
-                const responseAsistencia = await fetch(`${API_ASISTENCIAS}/marcar/${persona.id}`, {
-                    method: "POST"
-                });
+            if (!persona.estado) {
+                asistenciaMensaje = "La persona fue reconocida, pero está inactiva. No se registró asistencia.";
+            } else {
+                try {
+                    const responseAsistencia = await fetch(`${API_ASISTENCIAS}/marcar/${persona.id}`, {
+                        method: "POST"
+                    });
 
-                const textoRespuesta = await responseAsistencia.text();
+                    const textoRespuesta = await responseAsistencia.text();
 
-                if (!responseAsistencia.ok) {
-                    let mensajeError = "No se pudo registrar la asistencia.";
+                    if (!responseAsistencia.ok) {
+                        let mensajeError = "No se pudo registrar la asistencia.";
 
-                    try {
-                        const errorJson = JSON.parse(textoRespuesta);
-                        mensajeError = errorJson.message || mensajeError;
-                    } catch (e) {
-                        mensajeError = textoRespuesta;
+                        try {
+                            const errorJson = JSON.parse(textoRespuesta);
+                            mensajeError = errorJson.message || mensajeError;
+                        } catch (e) {
+                            mensajeError = textoRespuesta;
+                        }
+
+                        asistenciaMensaje = mensajeError;
+                    } else {
+                        const asistencia = JSON.parse(textoRespuesta);
+                        asistenciaMensaje = `Asistencia registrada correctamente. Estado: ${asistencia.estado}. Hora: ${asistencia.hora}`;
                     }
 
-                    asistenciaMensaje = mensajeError;
-                } else {
-                    const asistencia = JSON.parse(textoRespuesta);
-                    asistenciaMensaje = `Asistencia registrada correctamente. Estado: ${asistencia.estado}. Hora: ${asistencia.hora}`;
+                } catch (errorAsistencia) {
+                    asistenciaMensaje = "La persona fue reconocida, pero ocurrió un error al registrar asistencia.";
+                    console.error(errorAsistencia);
                 }
-
-            } catch (errorAsistencia) {
-                asistenciaMensaje = "La persona fue reconocida, pero ocurrió un error al registrar asistencia.";
-                console.error(errorAsistencia);
             }
 
             resultadoReconocimiento.innerHTML = `
@@ -741,6 +937,7 @@ if (btnReconocerPersona) {
                             <p><strong>Tipo:</strong> ${persona.tipoPersona}</p>
                             <p><strong>DNI:</strong> ${persona.dni}</p>
                             <p><strong>Detalle:</strong> ${obtenerDetallePersona(persona)}</p>
+                            <p><strong>Estado:</strong> ${persona.estado ? "Activo" : "Inactivo"}</p>
                             <p><strong>Rostro registrado:</strong> ${persona.rostroRegistrado ? "Sí" : "No"}</p>
                         </div>
                     </div>
@@ -881,12 +1078,14 @@ function cargarSelectPersonaFalta() {
 
     selectPersonaFalta.innerHTML = `<option value="">Selecciona una persona</option>`;
 
-    personas.forEach(persona => {
-        const option = document.createElement("option");
-        option.value = persona.id;
-        option.textContent = `${persona.nombres} ${persona.apellidos} - ${persona.tipoPersona}`;
-        selectPersonaFalta.appendChild(option);
-    });
+    personas
+        .filter(persona => persona.estado)
+        .forEach(persona => {
+            const option = document.createElement("option");
+            option.value = persona.id;
+            option.textContent = `${persona.nombres} ${persona.apellidos} - ${persona.tipoPersona}`;
+            selectPersonaFalta.appendChild(option);
+        });
 }
 
 if (btnRegistrarFaltaManual) {
@@ -894,7 +1093,7 @@ if (btnRegistrarFaltaManual) {
         const personaId = selectPersonaFalta.value;
 
         if (!personaId) {
-            mostrarMensajeAccionAsistencia("Selecciona una persona para registrar falta.", "danger");
+            mostrarMensajeAccionAsistencia("Selecciona una persona activa para registrar falta.", "danger");
             return;
         }
 
