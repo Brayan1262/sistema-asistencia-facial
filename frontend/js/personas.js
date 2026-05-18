@@ -39,6 +39,8 @@ const btnReconocerPersona = document.getElementById("btnReconocerPersona");
 const mensajeAsistencia = document.getElementById("mensajeAsistencia");
 const previewAsistencia = document.getElementById("previewAsistencia");
 const resultadoReconocimiento = document.getElementById("resultadoReconocimiento");
+const btnActualizarAsistencias = document.getElementById("btnActualizarAsistencias");
+const tablaAsistencias = document.getElementById("tablaAsistencias");
 
 const btnPerfilRapido = document.getElementById("btnPerfilRapido");
 const formPerfil = document.getElementById("formPerfil");
@@ -66,6 +68,7 @@ const pageInfo = {
 
 document.addEventListener("DOMContentLoaded", () => {
     cargarPersonas();
+    cargarAsistencias();
 });
 
 /* =========================
@@ -88,6 +91,10 @@ menuLinks.forEach(link => {
 
         pageTitle.textContent = pageInfo[section][0];
         pageDescription.textContent = pageInfo[section][1];
+
+        if (section === "asistencia") {
+            cargarAsistencias();
+        }
     });
 });
 
@@ -149,7 +156,15 @@ formPersona.addEventListener("submit", async (event) => {
         });
 
         if (!response.ok) {
-            throw new Error("No se pudo registrar. Verifica que el DNI no esté repetido.");
+            const errorText = await response.text();
+            let message = "No se pudo registrar. Verifica que el DNI no esté repetido.";
+
+            try {
+                const errorJson = JSON.parse(errorText);
+                message = errorJson.message || message;
+            } catch (e) {}
+
+            throw new Error(message);
         }
 
         mostrarAlerta("Persona registrada correctamente en MySQL.", "success");
@@ -167,6 +182,10 @@ formPersona.addEventListener("submit", async (event) => {
 });
 
 btnActualizarPersonas.addEventListener("click", cargarPersonas);
+
+if (btnActualizarAsistencias) {
+    btnActualizarAsistencias.addEventListener("click", cargarAsistencias);
+}
 
 filterBtns.forEach(btn => {
     btn.addEventListener("click", () => {
@@ -236,7 +255,6 @@ function renderTablaPersonas() {
         const detalle = obtenerDetallePersona(persona);
         const badgeClass = persona.tipoPersona === "ESTUDIANTE" ? "badge-student" : "badge-teacher";
         const tipoTexto = persona.tipoPersona === "ESTUDIANTE" ? "Estudiante" : "Docente";
-
         const rostroTexto = persona.rostroRegistrado ? "Rostro registrado" : "Sin rostro";
 
         const row = document.createElement("tr");
@@ -541,6 +559,8 @@ if (btnReconocerPersona) {
                 </div>
             `;
 
+            await cargarAsistencias();
+
             mostrarMensajeAsistencia("Persona reconocida correctamente.", "success");
 
         } catch (error) {
@@ -558,6 +578,94 @@ if (btnReconocerPersona) {
             console.error(error);
         }
     });
+}
+
+/* =========================
+   HISTORIAL DE ASISTENCIAS
+========================= */
+
+async function cargarAsistencias() {
+    if (!tablaAsistencias) {
+        return;
+    }
+
+    try {
+        const response = await fetch(API_ASISTENCIAS);
+
+        if (!response.ok) {
+            throw new Error("No se pudo cargar el historial de asistencias.");
+        }
+
+        const asistencias = await response.json();
+
+        renderTablaAsistencias(asistencias);
+
+    } catch (error) {
+        tablaAsistencias.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center text-danger py-4">
+                    Error al cargar asistencias. Verifica que Spring Boot esté encendido.
+                </td>
+            </tr>
+        `;
+
+        console.error(error);
+    }
+}
+
+function renderTablaAsistencias(asistencias) {
+    tablaAsistencias.innerHTML = "";
+
+    if (asistencias.length === 0) {
+        tablaAsistencias.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center text-muted py-4">
+                    Todavía no hay asistencias registradas.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    asistencias
+        .slice()
+        .reverse()
+        .forEach(asistencia => {
+            const persona = asistencia.persona;
+
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+                <td>${asistencia.id}</td>
+                <td>
+                    <div class="attendance-person">
+                        ${persona.nombres} ${persona.apellidos}
+                    </div>
+                    <div class="attendance-sub">
+                        DNI: ${persona.dni}
+                    </div>
+                </td>
+                <td>
+                    <span class="badge-custom ${persona.tipoPersona === "ESTUDIANTE" ? "badge-student" : "badge-teacher"}">
+                        ${persona.tipoPersona}
+                    </span>
+                </td>
+                <td>${asistencia.fecha}</td>
+                <td>${asistencia.hora}</td>
+                <td>
+                    <span class="badge-present">
+                        ${asistencia.estado}
+                    </span>
+                </td>
+                <td>
+                    <span class="badge-method">
+                        ${asistencia.metodoRegistro}
+                    </span>
+                </td>
+            `;
+
+            tablaAsistencias.appendChild(row);
+        });
 }
 
 /* =========================
