@@ -1,7 +1,3 @@
-/* ============================================================================
-   SISTEMA DE AUTENTICACIÓN Y ADMINISTRADOR DINÁMICO
-   ============================================================================ */
-
 // Inyectar CSS de login y admin dinámico
 function inyectarCSSLogin() {
     const styles = `
@@ -560,5 +556,8 @@ if (btnRestaurarAdmin) {
     btnRestaurarAdmin.addEventListener('click', restaurarAdmin);
 }
 
-// Inicializar
-inyectarCSSLogin();
+// Inicializar autenticación y administrador dinámico
+document.addEventListener("DOMContentLoaded", () => {
+    inyectarCSSLogin();
+    verificarSesion();
+});

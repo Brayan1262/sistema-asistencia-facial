@@ -49,7 +49,7 @@ const resultadoReconocimiento = document.getElementById("resultadoReconocimiento
 const btnActualizarAsistencias = document.getElementById("btnActualizarAsistencias");
 const tablaAsistencias = document.getElementById("tablaAsistencias");
 
-// Camera elements - Asistencia
+// Cámara en vivo - Asistencia
 const useCameraAsistencia = document.getElementById("useCameraAsistencia");
 const cameraSectionAsistencia = document.getElementById("cameraSectionAsistencia");
 const videoStreamAsistencia = document.getElementById("videoStreamAsistencia");
@@ -57,11 +57,11 @@ const btnToggleCameraAsistencia = document.getElementById("btnToggleCameraAsiste
 const btnCaptureFotoAsistencia = document.getElementById("btnCaptureFotoAsistencia");
 const btnStopCameraAsistencia = document.getElementById("btnStopCameraAsistencia");
 
-// Camera state - Asistencia
 let videoStreamActive = null;
 let isCameraRunningAsistencia = false;
 let capturedFileAsistencia = null;
 
+// Variables usadas también por auth-admin.js
 const btnPerfilRapido = document.getElementById("btnPerfilRapido");
 const formPerfil = document.getElementById("formPerfil");
 const adminNombre = document.getElementById("adminNombre");
@@ -87,9 +87,11 @@ const pageInfo = {
 };
 
 document.addEventListener("DOMContentLoaded", () => {
-    cargarPersonas();
-    cargarAsistencias();
-    cargarReportes();
+    if (sessionStorage.getItem("sesionActiva") === "true") {
+        cargarPersonas();
+        cargarAsistencias();
+        cargarReportes();
+    }
 });
 
 /* =========================
@@ -110,8 +112,10 @@ menuLinks.forEach(link => {
             sectionElement.classList.add("active-section");
         }
 
-        pageTitle.textContent = pageInfo[section][0];
-        pageDescription.textContent = pageInfo[section][1];
+        if (pageInfo[section]) {
+            pageTitle.textContent = pageInfo[section][0];
+            pageDescription.textContent = pageInfo[section][1];
+        }
 
         if (section === "asistencia") {
             cargarAsistencias();
@@ -123,91 +127,103 @@ menuLinks.forEach(link => {
     });
 });
 
-btnPerfilRapido.addEventListener("click", () => {
-    document.querySelector('[data-section="perfil"]').click();
-});
+if (btnPerfilRapido) {
+    btnPerfilRapido.addEventListener("click", () => {
+        const perfilBtn = document.querySelector('[data-section="perfil"]');
+
+        if (perfilBtn) {
+            perfilBtn.click();
+        }
+    });
+}
 
 /* =========================
    FORMULARIO DINÁMICO
 ========================= */
 
-tipoPersonaRegistro.addEventListener("change", () => {
-    const tipo = tipoPersonaRegistro.value;
+if (tipoPersonaRegistro) {
+    tipoPersonaRegistro.addEventListener("change", () => {
+        const tipo = tipoPersonaRegistro.value;
 
-    if (tipo === "ESTUDIANTE") {
-        camposEstudiante.classList.remove("d-none");
-        camposDocente.classList.add("d-none");
-    } else {
-        camposEstudiante.classList.add("d-none");
-        camposDocente.classList.remove("d-none");
-    }
-});
+        if (tipo === "ESTUDIANTE") {
+            camposEstudiante.classList.remove("d-none");
+            camposDocente.classList.add("d-none");
+        } else {
+            camposEstudiante.classList.add("d-none");
+            camposDocente.classList.remove("d-none");
+        }
+    });
+}
 
 /* =========================
    REGISTRO DE PERSONAS
 ========================= */
 
-formPersona.addEventListener("submit", async (event) => {
-    event.preventDefault();
+if (formPersona) {
+    formPersona.addEventListener("submit", async (event) => {
+        event.preventDefault();
 
-    const tipo = tipoPersonaRegistro.value;
+        const tipo = tipoPersonaRegistro.value;
 
-    const persona = {
-        nombres: document.getElementById("nombres").value.trim(),
-        apellidos: document.getElementById("apellidos").value.trim(),
-        dni: document.getElementById("dni").value.trim(),
-        correo: document.getElementById("correo").value.trim(),
-        telefono: document.getElementById("telefono").value.trim(),
-        tipoPersona: tipo,
-        grado: tipo === "ESTUDIANTE" ? document.getElementById("grado").value.trim() : "",
-        seccion: tipo === "ESTUDIANTE" ? document.getElementById("seccion").value.trim() : "",
-        especialidad: tipo === "DOCENTE" ? document.getElementById("especialidad").value.trim() : "",
-        cargo: tipo === "DOCENTE" ? document.getElementById("cargo").value.trim() : "",
-        estado: true
-    };
+        const persona = {
+            nombres: document.getElementById("nombres").value.trim(),
+            apellidos: document.getElementById("apellidos").value.trim(),
+            dni: document.getElementById("dni").value.trim(),
+            correo: document.getElementById("correo").value.trim(),
+            telefono: document.getElementById("telefono").value.trim(),
+            tipoPersona: tipo,
+            grado: tipo === "ESTUDIANTE" ? document.getElementById("grado").value.trim() : "",
+            seccion: tipo === "ESTUDIANTE" ? document.getElementById("seccion").value.trim() : "",
+            especialidad: tipo === "DOCENTE" ? document.getElementById("especialidad").value.trim() : "",
+            cargo: tipo === "DOCENTE" ? document.getElementById("cargo").value.trim() : "",
+            estado: true
+        };
 
-    if (!validarPersona(persona)) {
-        mostrarAlerta("Completa los campos obligatorios según el tipo de persona.", "danger");
-        return;
-    }
-
-    try {
-        const response = await fetch(API_PERSONAS, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(persona)
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            let message = "No se pudo registrar. Verifica que el DNI no esté repetido.";
-
-            try {
-                const errorJson = JSON.parse(errorText);
-                message = errorJson.message || message;
-            } catch (e) {}
-
-            throw new Error(message);
+        if (!validarPersona(persona)) {
+            mostrarAlerta("Completa los campos obligatorios según el tipo de persona.", "danger");
+            return;
         }
 
-        mostrarAlerta("Persona registrada correctamente en MySQL.", "success");
+        try {
+            const response = await fetch(API_PERSONAS, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(persona)
+            });
 
-        formPersona.reset();
-        tipoPersonaRegistro.value = "ESTUDIANTE";
-        tipoPersonaRegistro.dispatchEvent(new Event("change"));
+            if (!response.ok) {
+                const errorText = await response.text();
+                let message = "No se pudo registrar. Verifica que el DNI no esté repetido.";
 
-        await cargarPersonas();
-        await cargarReportes();
+                try {
+                    const errorJson = JSON.parse(errorText);
+                    message = errorJson.message || message;
+                } catch (e) {}
 
-    } catch (error) {
-        mostrarAlerta(error.message, "danger");
-        console.error(error);
-    }
-});
+                throw new Error(message);
+            }
 
-btnActualizarPersonas.addEventListener("click", cargarPersonas);
+            mostrarAlerta("Persona registrada correctamente en MySQL.", "success");
+
+            formPersona.reset();
+            tipoPersonaRegistro.value = "ESTUDIANTE";
+            tipoPersonaRegistro.dispatchEvent(new Event("change"));
+
+            await cargarPersonas();
+            await cargarReportes();
+
+        } catch (error) {
+            mostrarAlerta(error.message, "danger");
+            console.error(error);
+        }
+    });
+}
+
+if (btnActualizarPersonas) {
+    btnActualizarPersonas.addEventListener("click", cargarPersonas);
+}
 
 if (btnActualizarAsistencias) {
     btnActualizarAsistencias.addEventListener("click", cargarAsistencias);
@@ -232,6 +248,10 @@ filterBtns.forEach(btn => {
 ========================= */
 
 async function cargarPersonas() {
+    if (!tablaPersonas) {
+        return;
+    }
+
     try {
         const response = await fetch(API_PERSONAS);
 
@@ -264,6 +284,10 @@ async function cargarPersonas() {
 }
 
 function renderTablaPersonas() {
+    if (!tablaPersonas) {
+        return;
+    }
+
     const lista = filtroActual === "TODOS"
         ? personas
         : personas.filter(p => p.tipoPersona === filtroActual);
@@ -317,15 +341,15 @@ function actualizarDashboard() {
     const estudiantes = personas.filter(p => p.tipoPersona === "ESTUDIANTE").length;
     const docentes = personas.filter(p => p.tipoPersona === "DOCENTE").length;
 
-    totalPersonas.textContent = personas.length;
-    totalEstudiantes.textContent = estudiantes;
-    totalDocentes.textContent = docentes;
+    if (totalPersonas) totalPersonas.textContent = personas.length;
+    if (totalEstudiantes) totalEstudiantes.textContent = estudiantes;
+    if (totalDocentes) totalDocentes.textContent = docentes;
+    if (reportePersonas) reportePersonas.textContent = personas.length;
+    if (donutTotalPersonas) donutTotalPersonas.textContent = personas.length;
 
-    if (reportePersonas) {
-        reportePersonas.textContent = personas.length;
+    if (!donutTipoPersona || !leyendaTipos) {
+        return;
     }
-
-    donutTotalPersonas.textContent = personas.length;
 
     if (personas.length === 0) {
         donutTipoPersona.style.background = "#e2e8f0";
@@ -366,6 +390,10 @@ function actualizarDashboard() {
 ========================= */
 
 function cargarSelectRostro() {
+    if (!selectPersonaRostro) {
+        return;
+    }
+
     selectPersonaRostro.innerHTML = `<option value="">Selecciona una persona</option>`;
 
     personas.forEach(persona => {
@@ -376,87 +404,91 @@ function cargarSelectRostro() {
     });
 }
 
-fotoRostro.addEventListener("change", () => {
-    const file = fotoRostro.files[0];
+if (fotoRostro) {
+    fotoRostro.addEventListener("change", () => {
+        const file = fotoRostro.files[0];
 
-    if (!file) {
+        if (!file) {
+            photoPreview.innerHTML = `
+                <div>
+                    <i class="bi bi-image"></i>
+                    <p>Sin imagen seleccionada</p>
+                </div>
+            `;
+            return;
+        }
+
+        const imageUrl = URL.createObjectURL(file);
+
         photoPreview.innerHTML = `
-            <div>
-                <i class="bi bi-image"></i>
-                <p>Sin imagen seleccionada</p>
-            </div>
+            <img src="${imageUrl}" alt="Vista previa de rostro">
         `;
-        return;
-    }
+    });
+}
 
-    const imageUrl = URL.createObjectURL(file);
+if (btnRegistrarRostro) {
+    btnRegistrarRostro.addEventListener("click", async () => {
+        const personaId = selectPersonaRostro.value;
+        const file = fotoRostro.files[0];
 
-    photoPreview.innerHTML = `
-        <img src="${imageUrl}" alt="Vista previa de rostro">
-    `;
-});
-
-btnRegistrarRostro.addEventListener("click", async () => {
-    const personaId = selectPersonaRostro.value;
-    const file = fotoRostro.files[0];
-
-    if (!personaId) {
-        mostrarMensajeRostro("Selecciona una persona.", "danger");
-        return;
-    }
-
-    if (!file) {
-        mostrarMensajeRostro("Selecciona una foto del rostro.", "danger");
-        return;
-    }
-
-    const persona = personas.find(p => String(p.id) === String(personaId));
-
-    if (!persona) {
-        mostrarMensajeRostro("No se encontró la persona seleccionada.", "danger");
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append("personaId", persona.id);
-    formData.append("tipoPersona", persona.tipoPersona);
-    formData.append("image", file);
-
-    try {
-        const responsePython = await fetch(API_FACE_REGISTER, {
-            method: "POST",
-            body: formData
-        });
-
-        const data = await responsePython.json();
-
-        if (!responsePython.ok) {
-            throw new Error(data.message || "No se pudo registrar el rostro.");
+        if (!personaId) {
+            mostrarMensajeRostro("Selecciona una persona.", "danger");
+            return;
         }
 
-        const responseJava = await fetch(
-            `${API_PERSONAS}/${persona.id}/rostro?rutaRostro=${encodeURIComponent(data.path)}`,
-            {
-                method: "PATCH"
+        if (!file) {
+            mostrarMensajeRostro("Selecciona una foto del rostro.", "danger");
+            return;
+        }
+
+        const persona = personas.find(p => String(p.id) === String(personaId));
+
+        if (!persona) {
+            mostrarMensajeRostro("No se encontró la persona seleccionada.", "danger");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("personaId", persona.id);
+        formData.append("tipoPersona", persona.tipoPersona);
+        formData.append("image", file);
+
+        try {
+            const responsePython = await fetch(API_FACE_REGISTER, {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await responsePython.json();
+
+            if (!responsePython.ok) {
+                throw new Error(data.message || "No se pudo registrar el rostro.");
             }
-        );
 
-        if (!responseJava.ok) {
-            throw new Error("La imagen se guardó en Python, pero no se pudo actualizar la persona en MySQL.");
+            const responseJava = await fetch(
+                `${API_PERSONAS}/${persona.id}/rostro?rutaRostro=${encodeURIComponent(data.path)}`,
+                {
+                    method: "PATCH"
+                }
+            );
+
+            if (!responseJava.ok) {
+                throw new Error("La imagen se guardó en Python, pero no se pudo actualizar la persona en MySQL.");
+            }
+
+            mostrarMensajeRostro(
+                `Rostro guardado correctamente para ${persona.nombres} ${persona.apellidos}. Archivo: ${data.filename}`,
+                "success"
+            );
+
+            await cargarPersonas();
+
+        } catch (error) {
+            mostrarMensajeRostro("Error al guardar rostro: " + error.message, "danger");
+            console.error(error);
         }
-
-        mostrarMensajeRostro(
-            `Rostro guardado correctamente para ${persona.nombres} ${persona.apellidos}. Archivo: ${data.filename}`,
-            "success"
-        );
-
-        await cargarPersonas();
-
-    } catch (error) {
-        mostrarMensajeRostro("Error al guardar rostro: " + error.message, "danger");
-        console.error(error);
-    }
-});
+    });
+}
 
 /* =========================
    ASISTENCIA Y RECONOCIMIENTO
@@ -465,6 +497,8 @@ btnRegistrarRostro.addEventListener("click", async () => {
 if (fotoAsistencia) {
     fotoAsistencia.addEventListener("change", () => {
         const file = fotoAsistencia.files[0];
+
+        capturedFileAsistencia = null;
 
         if (!file) {
             previewAsistencia.innerHTML = `
@@ -484,21 +518,28 @@ if (fotoAsistencia) {
     });
 }
 
-// Camera functions - Asistencia
 async function iniciarCamaraAsistencia() {
     try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            throw new Error("El navegador no soporta acceso a cámara.");
+        }
+
         videoStreamActive = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+            video: {
+                facingMode: "user",
+                width: { ideal: 640 },
+                height: { ideal: 480 }
+            },
             audio: false
         });
-        
+
         videoStreamAsistencia.srcObject = videoStreamActive;
         isCameraRunningAsistencia = true;
-        
+
         btnToggleCameraAsistencia.classList.add("d-none");
         btnCaptureFotoAsistencia.classList.remove("d-none");
         btnStopCameraAsistencia.classList.remove("d-none");
-        
+
         mostrarMensajeAsistencia("Cámara iniciada correctamente.", "primary");
     } catch (error) {
         mostrarMensajeAsistencia("Permiso de cámara denegado o no disponible: " + error.message, "danger");
@@ -511,82 +552,101 @@ function detenerCamaraAsistencia() {
         videoStreamActive.getTracks().forEach(track => track.stop());
         videoStreamActive = null;
     }
-    
-    videoStreamAsistencia.srcObject = null;
+
+    if (videoStreamAsistencia) {
+        videoStreamAsistencia.srcObject = null;
+    }
+
     isCameraRunningAsistencia = false;
-    
-    btnToggleCameraAsistencia.classList.remove("d-none");
-    btnCaptureFotoAsistencia.classList.add("d-none");
-    btnStopCameraAsistencia.classList.add("d-none");
-    
-    previewAsistencia.innerHTML = `
-        <div>
-            <i class="bi bi-image"></i>
-            <p>Sin imagen seleccionada</p>
-        </div>
-    `;
-    
+
+    if (btnToggleCameraAsistencia) btnToggleCameraAsistencia.classList.remove("d-none");
+    if (btnCaptureFotoAsistencia) btnCaptureFotoAsistencia.classList.add("d-none");
+    if (btnStopCameraAsistencia) btnStopCameraAsistencia.classList.add("d-none");
+
+    capturedFileAsistencia = null;
+
+    if (previewAsistencia) {
+        previewAsistencia.innerHTML = `
+            <div>
+                <i class="bi bi-image"></i>
+                <p>Sin imagen seleccionada</p>
+            </div>
+        `;
+    }
+
     mostrarMensajeAsistencia("Cámara detenida.", "info");
 }
 
 function capturarFotoAsistencia() {
-    if (!isCameraRunningAsistencia) {
+    if (!isCameraRunningAsistencia || !videoStreamAsistencia) {
         mostrarMensajeAsistencia("La cámara no está activa.", "danger");
         return;
     }
-    
+
     const canvas = document.createElement("canvas");
     canvas.width = videoStreamAsistencia.videoWidth;
     canvas.height = videoStreamAsistencia.videoHeight;
-    
+
     if (canvas.width === 0 || canvas.height === 0) {
         mostrarMensajeAsistencia("La cámara aún no está lista. Intenta nuevamente.", "warning");
         return;
     }
-    
+
     const ctx = canvas.getContext("2d");
     ctx.drawImage(videoStreamAsistencia, 0, 0);
-    
+
     canvas.toBlob(blob => {
         if (!blob) {
             mostrarMensajeAsistencia("Error al capturar la foto. Intenta nuevamente.", "danger");
             return;
         }
-        
-        const file = new File([blob], "captura-asistencia-" + Date.now() + ".jpg", { type: "image/jpeg" });
+
+        const file = new File(
+            [blob],
+            "captura-asistencia-" + Date.now() + ".jpg",
+            { type: "image/jpeg" }
+        );
+
         capturedFileAsistencia = file;
-        
+
         const imageUrl = URL.createObjectURL(blob);
+
         previewAsistencia.innerHTML = `
-            <img src="${imageUrl}" alt="Captura de cámara" style="width: 100%; border-radius: 8px;">
+            <img src="${imageUrl}" alt="Captura de cámara">
         `;
-        
+
         mostrarMensajeAsistencia("Foto capturada correctamente. Presiona 'Reconocer persona'.", "success");
     }, "image/jpeg", 0.95);
 }
 
-// Event listeners - Camera toggle
-useCameraAsistencia.addEventListener("change", (e) => {
-    cameraSectionAsistencia.classList.toggle("d-none", !e.target.checked);
-    
-    if (!e.target.checked) {
-        // Si se desactiva, detener la cámara
-        if (isCameraRunningAsistencia) {
-            detenerCamaraAsistencia();
+if (useCameraAsistencia) {
+    useCameraAsistencia.addEventListener("change", (e) => {
+        cameraSectionAsistencia.classList.toggle("d-none", !e.target.checked);
+
+        if (!e.target.checked) {
+            if (isCameraRunningAsistencia) {
+                detenerCamaraAsistencia();
+            }
+
+            capturedFileAsistencia = null;
         }
-        capturedFileAsistencia = null;
-    }
-});
+    });
+}
 
-btnToggleCameraAsistencia.addEventListener("click", iniciarCamaraAsistencia);
+if (btnToggleCameraAsistencia) {
+    btnToggleCameraAsistencia.addEventListener("click", iniciarCamaraAsistencia);
+}
 
-btnCaptureFotoAsistencia.addEventListener("click", capturarFotoAsistencia);
+if (btnCaptureFotoAsistencia) {
+    btnCaptureFotoAsistencia.addEventListener("click", capturarFotoAsistencia);
+}
 
-btnStopCameraAsistencia.addEventListener("click", detenerCamaraAsistencia);
+if (btnStopCameraAsistencia) {
+    btnStopCameraAsistencia.addEventListener("click", detenerCamaraAsistencia);
+}
 
 if (btnReconocerPersona) {
     btnReconocerPersona.addEventListener("click", async () => {
-        // Prioridad: archivo capturado de cámara, luego archivo subido
         const file = capturedFileAsistencia || fotoAsistencia.files[0];
 
         if (!file) {
@@ -746,6 +806,10 @@ async function cargarAsistencias() {
 }
 
 function renderTablaAsistencias(asistencias) {
+    if (!tablaAsistencias) {
+        return;
+    }
+
     tablaAsistencias.innerHTML = "";
 
     if (asistencias.length === 0) {
@@ -805,6 +869,10 @@ function renderTablaAsistencias(asistencias) {
 ========================= */
 
 async function cargarReportes() {
+    if (!tablaUltimasAsistencias && !reporteTotalAsistencias) {
+        return;
+    }
+
     try {
         const response = await fetch(API_ASISTENCIAS);
 
@@ -833,7 +901,9 @@ async function cargarReportes() {
 }
 
 function actualizarReportes(asistencias) {
-    if (!reporteTotalAsistencias) return;
+    if (!reporteTotalAsistencias) {
+        return;
+    }
 
     const hoy = obtenerFechaActual();
     const asistenciasHoy = asistencias.filter(a => a.fecha === hoy);
@@ -841,12 +911,15 @@ function actualizarReportes(asistencias) {
     const estudiantesHoy = asistenciasHoy.filter(a => a.persona?.tipoPersona === "ESTUDIANTE").length;
     const docentesHoy = asistenciasHoy.filter(a => a.persona?.tipoPersona === "DOCENTE").length;
 
-    reportePersonas.textContent = personas.length;
-    reporteTotalAsistencias.textContent = asistencias.length;
-    reporteAsistenciasHoy.textContent = asistenciasHoy.length;
-    reportePresentesHoy.textContent = asistenciasHoy.length;
+    if (reportePersonas) reportePersonas.textContent = personas.length;
+    if (reporteTotalAsistencias) reporteTotalAsistencias.textContent = asistencias.length;
+    if (reporteAsistenciasHoy) reporteAsistenciasHoy.textContent = asistenciasHoy.length;
+    if (reportePresentesHoy) reportePresentesHoy.textContent = asistenciasHoy.length;
+    if (donutTotalReportes) donutTotalReportes.textContent = asistenciasHoy.length;
 
-    donutTotalReportes.textContent = asistenciasHoy.length;
+    if (!donutReportes || !leyendaReportes) {
+        return;
+    }
 
     if (asistenciasHoy.length === 0) {
         donutReportes.style.background = "#e2e8f0";
@@ -883,7 +956,9 @@ function actualizarReportes(asistencias) {
 }
 
 function renderUltimasAsistencias(asistencias) {
-    if (!tablaUltimasAsistencias) return;
+    if (!tablaUltimasAsistencias) {
+        return;
+    }
 
     tablaUltimasAsistencias.innerHTML = "";
 
@@ -942,58 +1017,6 @@ function renderUltimasAsistencias(asistencias) {
         });
 }
 
-function obtenerFechaActual() {
-    const fecha = new Date();
-    const year = fecha.getFullYear();
-    const month = String(fecha.getMonth() + 1).padStart(2, "0");
-    const day = String(fecha.getDate()).padStart(2, "0");
-
-    return `${year}-${month}-${day}`;
-}
-
-/* =========================
-   PERFIL ADMIN
-========================= */
-
-formPerfil.addEventListener("submit", (event) => {
-    event.preventDefault();
-
-    const nombre = adminNombre.value.trim();
-    const correo = adminCorreo.value.trim();
-
-    if (!nombre || !correo) {
-        mostrarMensajePerfil("Completa nombre y correo.", "danger");
-        return;
-    }
-
-    adminNombreTop.textContent = nombre;
-    adminNombreVista.textContent = nombre;
-    adminCorreoVista.textContent = correo;
-
-    const iniciales = obtenerIniciales(nombre);
-
-    if (!adminAvatarTop.querySelector("img")) {
-        adminAvatarTop.textContent = iniciales;
-    }
-
-    if (!adminAvatarGrande.querySelector("img")) {
-        adminAvatarGrande.textContent = iniciales;
-    }
-
-    mostrarMensajePerfil("Perfil actualizado correctamente.", "success");
-});
-
-adminFoto.addEventListener("change", () => {
-    const file = adminFoto.files[0];
-
-    if (!file) return;
-
-    const imageUrl = URL.createObjectURL(file);
-
-    adminAvatarTop.innerHTML = `<img src="${imageUrl}" alt="Foto administrador">`;
-    adminAvatarGrande.innerHTML = `<img src="${imageUrl}" alt="Foto administrador">`;
-});
-
 /* =========================
    UTILIDADES
 ========================= */
@@ -1026,7 +1049,20 @@ function obtenerDetallePersona(persona) {
     return "Sin detalle";
 }
 
+function obtenerFechaActual() {
+    const fecha = new Date();
+    const year = fecha.getFullYear();
+    const month = String(fecha.getMonth() + 1).padStart(2, "0");
+    const day = String(fecha.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+}
+
 function mostrarAlerta(texto, tipo) {
+    if (!globalAlert) {
+        return;
+    }
+
     globalAlert.className = `alert alert-${tipo}`;
     globalAlert.textContent = texto;
     globalAlert.classList.remove("d-none");
@@ -1037,6 +1073,10 @@ function mostrarAlerta(texto, tipo) {
 }
 
 function mostrarMensajeRostro(texto, tipo) {
+    if (!mensajeRostro) {
+        return;
+    }
+
     mensajeRostro.className = `mt-3 fw-bold text-${tipo}`;
     mensajeRostro.textContent = texto;
 
@@ -1046,22 +1086,16 @@ function mostrarMensajeRostro(texto, tipo) {
 }
 
 function mostrarMensajeAsistencia(texto, tipo) {
+    if (!mensajeAsistencia) {
+        return;
+    }
+
     mensajeAsistencia.className = `mt-3 fw-bold text-${tipo}`;
     mensajeAsistencia.textContent = texto;
 
     setTimeout(() => {
         mensajeAsistencia.textContent = "";
     }, 5000);
-}
-
-function mostrarMensajePerfil(texto, tipo) {
-    const mensajePerfil = document.getElementById("mensajePerfil");
-    mensajePerfil.className = `mt-3 fw-bold text-${tipo}`;
-    mensajePerfil.textContent = texto;
-
-    setTimeout(() => {
-        mensajePerfil.textContent = "";
-    }, 4500);
 }
 
 function obtenerIniciales(nombre) {
