@@ -1,7 +1,7 @@
 # Sistema de Asistencia Facial
 
 Sistema web de asistencia con reconocimiento facial desarrollado para instituciones educativas.  
-Permite registrar estudiantes y docentes, asociarles una imagen facial, reconocerlos mediante inteligencia artificial y marcar su asistencia automáticamente.
+Permite registrar estudiantes y docentes, asociarles una imagen facial, reconocerlos mediante inteligencia artificial, marcar su asistencia automáticamente, generar reportes y administrar el sistema desde un panel dinámico.
 
 ---
 
@@ -9,7 +9,7 @@ Permite registrar estudiantes y docentes, asociarles una imagen facial, reconoce
 
 Este proyecto tiene como objetivo automatizar el control de asistencia en un colegio mediante reconocimiento facial.
 
-El sistema permite gestionar personas del entorno educativo, como estudiantes y docentes, usando una sola entidad principal llamada **Persona**. Cada persona puede tener un rostro registrado y, posteriormente, ser reconocida por el sistema para marcar su asistencia.
+El sistema permite gestionar personas del entorno educativo, como estudiantes y docentes, usando una sola entidad principal llamada **Persona**. Cada persona puede tener un rostro registrado y posteriormente ser reconocida mediante una imagen o cámara en vivo para marcar su asistencia.
 
 El proyecto está desarrollado con una arquitectura separada:
 
@@ -22,98 +22,109 @@ Microservicio Python Flask + OpenCV
 ↓
 Base de datos MySQL
 
+Objetivo del sistema
+
+El objetivo principal del sistema es reemplazar el registro manual de asistencia por un proceso más rápido, moderno y automatizado usando reconocimiento facial.
+
+En un colegio o institución educativa, normalmente la asistencia se registra de forma manual, lo cual puede generar pérdida de tiempo, errores, registros duplicados o dificultad para consultar reportes. Este sistema busca solucionar ese problema permitiendo que estudiantes y docentes sean reconocidos mediante una imagen o cámara en vivo para registrar su asistencia automáticamente.
+
+Problema que resuelve
+
+El sistema resuelve problemas como:
+
+Registro manual lento de asistencia.
+Posibles errores al tomar asistencia.
+Falta de reportes rápidos.
+Dificultad para consultar asistencias por fecha.
+Falta de control visual de estudiantes y docentes registrados.
+Necesidad de automatizar procesos administrativos en instituciones educativas.
 Funcionalidades principales
-Registro de personas.
-Clasificación por tipo de persona: estudiante o docente.
-Campos dinámicos según el tipo de persona.
-Registro de rostro asociado a una persona.
-Almacenamiento de imágenes faciales en el microservicio Python.
-Reconocimiento facial usando OpenCV.
-Consulta de datos de la persona reconocida desde MySQL.
-Marcado automático de asistencia.
-Prevención de asistencia duplicada por día.
-Manejo limpio de errores desde el backend.
-Interfaz web moderna con Bootstrap.
-Dashboard con indicadores visuales.
-Perfil del administrador.
-Tecnologías utilizadas
-Frontend
-HTML5
-CSS3
-JavaScript
-Bootstrap 5
-Bootstrap Icons
-Backend
-Java 21
-Spring Boot
-Spring Web
-Spring Data JPA
-Maven
-Microservicio de reconocimiento facial
-Python 3.12
-Flask
-Flask-CORS
-OpenCV
-NumPy
-Base de datos
-MySQL
-XAMPP
-Control de versiones
-Git
-GitHub
 
-Arquitectura del sistema
-sistema-asistencia-facial/
-│
-├── backend-java/
-│   └── API REST con Spring Boot
-│
-├── facial-service-python/
-│   └── Microservicio Flask para registro y reconocimiento facial
-│
-├── frontend/
-│   └── Interfaz web con Bootstrap y JavaScript
-│
-├── database/
-│   └── Archivos relacionados con base de datos
-│
-├── docs/
-│   └── Documentación del proyecto
-│
-├── README.md
-└── .gitignore
+El sistema cuenta con las siguientes funcionalidades:
 
-Módulos del sistema
-Personas
+Acceso administrativo
+Pantalla de login para el administrador.
+Validación de usuario y contraseña.
+Ocultamiento del panel si no hay sesión activa.
+Cierre de sesión.
+Uso de sessionStorage para mantener la sesión mientras se usa el sistema.
 
-Permite registrar estudiantes y docentes desde un solo formulario.
+Credenciales de demostración:
 
-Los estudiantes tienen campos como:
+Usuario: admin
+Contraseña: admin123
+Administrador dinámico
 
-grado
-sección
+El sistema permite editar los datos visibles del administrador desde el módulo Perfil.
 
-Los docentes tienen campos como:
+Datos editables:
 
-especialidad
-cargo
+Nombre completo
+Correo electrónico
+Institución
+Cargo
+Teléfono
+Descripción
+Foto de perfil
 
-Ambos comparten datos generales como:
+Estos datos se guardan usando localStorage, por lo que se mantienen aunque el navegador se recargue.
 
-nombres
-apellidos
+El perfil del administrador se muestra en:
+
+Barra superior del panel.
+Tarjeta de perfil.
+Avatar del administrador.
+Información visible del sistema.
+Dashboard principal
+
+El dashboard muestra un resumen general del sistema:
+
+Total de personas registradas.
+Total de estudiantes.
+Total de docentes.
+Gráfico visual de distribución entre estudiantes y docentes.
+Flujo general del sistema.
+
+El objetivo del dashboard es dar una vista rápida del estado general del sistema.
+
+Gestión de personas
+
+El sistema permite registrar dos tipos de personas:
+
+Estudiante
+Docente
+
+Ambos se gestionan desde una sola entidad llamada Persona.
+
+Datos generales:
+
+Nombres
+Apellidos
 DNI
-correo
-teléfono
-tipo de persona
-estado
-Reconocimiento facial
+Correo
+Teléfono
+Tipo de persona
+Estado
 
-Permite seleccionar una persona registrada y asociarle una imagen facial.
+Datos específicos para estudiantes:
 
-Flujo:
+Grado
+Sección
 
-Seleccionar persona
+Datos específicos para docentes:
+
+Especialidad
+Cargo
+
+El formulario cambia dinámicamente según el tipo de persona seleccionado.
+
+Registro facial
+
+Cada persona puede tener un rostro registrado.
+
+El proceso es:
+
+Seleccionar persona registrada
 ↓
 Subir imagen del rostro
 ↓
@@ -122,254 +133,259 @@ Enviar imagen al microservicio Python
 Guardar imagen en la carpeta faces/
 ↓
 Actualizar en MySQL que la persona tiene rostro registrado
-Asistencia
 
-Permite subir una imagen para reconocer a una persona.
+La imagen facial se guarda en el microservicio Python con un nombre relacionado al ID y tipo de persona.
+
+Ejemplo:
+
+persona_1_estudiante.jpg
+persona_2_docente.jpg
+
+Reconocimiento facial con imagen
+
+El sistema permite subir una imagen para reconocer a una persona.
 
 Flujo:
 
 Subir imagen
 ↓
-Python analiza el rostro
+Python recibe la imagen
 ↓
-Python compara con los rostros registrados
+OpenCV compara con los rostros registrados
 ↓
-Devuelve el ID de la persona reconocida
+Si encuentra coincidencia, devuelve el ID de la persona
 ↓
-Java consulta los datos en MySQL
+Java consulta la persona en MySQL
 ↓
-Java registra la asistencia automáticamente
-Base de datos
+Se muestran los datos de la persona reconocida
+↓
+Se registra la asistencia automáticamente
 
-El sistema trabaja principalmente con estas entidades:
+Reconocimiento facial con cámara en vivo
 
-Persona
+Además de subir imágenes, el sistema permite usar la cámara del navegador.
 
-Representa a estudiantes y docentes.
+Flujo:
 
-Campos principales:
+Activar cámara
+↓
+Permitir acceso a la cámara
+↓
+Capturar foto
+↓
+Enviar captura temporal a Python
+↓
+Comparar con rostro registrado
+↓
+Reconocer persona
+↓
+Registrar asistencia
 
-id
-nombres
-apellidos
-dni
-correo
-telefono
-tipoPersona
-grado
-seccion
-especialidad
-cargo
-estado
-rostroRegistrado
-rutaRostro
-fechaRegistro
-Asistencia
+La captura tomada desde la cámara no se guarda permanentemente. Solo se usa de forma temporal para comparar el rostro y marcar asistencia.
 
-Representa el registro de asistencia de una persona.
+Registro automático de asistencia
 
-Campos principales:
+Cuando una persona es reconocida correctamente, el sistema registra su asistencia con:
 
-id
-persona
-fecha
-hora
-estado
-metodoRegistro
-fechaRegistro
-Endpoints principales
-Personas
-GET    /api/personas
-GET    /api/personas/{id}
-GET    /api/personas/tipo/{tipoPersona}
-POST   /api/personas
-PUT    /api/personas/{id}
-PATCH  /api/personas/{id}/rostro
-DELETE /api/personas/{id}
-Asistencias
-GET  /api/asistencias
-GET  /api/asistencias/fecha/{fecha}
-GET  /api/asistencias/persona/{personaId}
-POST /api/asistencias/marcar/{personaId}
-Microservicio Python
-GET  /health
-POST /api/faces/register
-POST /api/faces/recognize
-Cómo ejecutar el proyecto
-1. Clonar el repositorio
-git clone https://github.com/Brayan1262/sistema-asistencia-facial.git
-cd sistema-asistencia-facial
-Configuración de MySQL
+Fecha
+Hora
+Estado
+Método de registro
+Persona reconocida
 
-El proyecto usa MySQL mediante XAMPP.
-
-Configuración usada:
-
-Host: localhost
-Puerto: 3308
-Base de datos: asistencia_db
-
-Asegúrate de tener MySQL encendido en XAMPP antes de ejecutar el backend.
-
-Ejecutar backend Java
-
-Entrar a la carpeta del backend:
-
-cd backend-java
-
-Ejecutar Spring Boot:
-
-mvnw.cmd spring-boot:run
-
-El backend se ejecutará en:
-
-http://localhost:8080
-
-Probar backend:
-
-http://localhost:8080/api/health
-
-Probar personas:
-
-http://localhost:8080/api/personas
-Ejecutar microservicio Python
-
-Entrar a la carpeta del microservicio:
-
-cd facial-service-python
-
-Activar entorno virtual:
-
-venv\Scripts\activate
-
-Instalar dependencias:
-
-pip install -r requirements.txt
-
-Ejecutar Flask:
-
-python app.py
-
-El microservicio se ejecutará en:
-
-http://localhost:5001
-
-Probar microservicio:
-
-http://127.0.0.1:5001/health
-
-Debe mostrar algo similar a:
-
-{
-  "status": "ok",
-  "service": "facial-service-python",
-  "opencv_face_module": true
-}
-Ejecutar frontend
-
-Abrir el archivo:
-
-frontend/personas.html
-
-Recomendado usando Live Server en VS Code:
-
-http://127.0.0.1:5500/frontend/personas.html
-Flujo de uso del sistema
-1. Registrar persona
-
-Entrar al módulo Personas y registrar un:
-
-Estudiante
-
-o un:
-
-Docente
-2. Registrar rostro
-
-Entrar al módulo Reconocimiento.
-
-Luego:
-
-Seleccionar persona
-Subir foto frontal
-Presionar Registrar rostro
-
-La imagen se guarda en:
-
-facial-service-python/faces/
-3. Reconocer persona
-
-Entrar al módulo Asistencia.
-
-Luego:
-
-Subir imagen
-Presionar Reconocer persona
-
-El sistema mostrará:
-
-Nombre de la persona
-Tipo de persona
-DNI
-Detalle académico o laboral
-Nivel de confianza
-Estado de asistencia
-4. Registrar asistencia
-
-Cuando el rostro se reconoce correctamente, el sistema marca asistencia como:
+El estado registrado es:
 
 PRESENTE
 
-con método:
+El método de registro es:
 
 RECONOCIMIENTO_FACIAL
+Prevención de asistencia duplicada
 
-Si la persona ya registró asistencia el mismo día, el sistema evita duplicados y muestra:
+El sistema evita que una misma persona registre asistencia más de una vez en el mismo día.
+
+Si la persona ya registró asistencia, el sistema muestra un mensaje como:
 
 La asistencia de esta persona ya fue registrada hoy.
-Seguridad y privacidad
 
-Las imágenes faciales registradas no se suben al repositorio.
+Esto evita duplicados en la base de datos.
 
-La carpeta:
+Historial de asistencias
 
-facial-service-python/faces/
+El sistema muestra una tabla con el historial de asistencias registradas.
 
-está incluida en .gitignore para evitar subir fotos personales o datos sensibles a GitHub.
+Campos mostrados:
 
-También se ignora:
+ID
+Persona
+Tipo
+Fecha
+Hora
+Estado
+Método
 
-facial-service-python/venv/
-backend-java/target/
-.env
-Estado actual del proyecto
+Este historial permite revisar rápidamente quién registró asistencia y cuándo.
 
-El sistema actualmente permite:
+Reportes
 
-Registrar estudiantes y docentes.
-Asociar una imagen facial a cada persona.
-Reconocer una persona mediante imagen.
-Consultar los datos reconocidos desde MySQL.
-Marcar asistencia automáticamente.
-Evitar duplicados de asistencia por día.
-Próximas mejoras
-Agregar historial visual de asistencias en el frontend.
-Agregar reportes por fecha.
-Agregar cámara en vivo.
-Mejorar el algoritmo de reconocimiento facial.
-Agregar login de administrador.
-Migrar el frontend a React con Vite.
-Agregar exportación de reportes en PDF o Excel.
-Desplegar el sistema en la nube.
+El módulo de reportes permite consultar la información de asistencia de forma más ordenada.
+
+Incluye:
+
+Total de personas.
+Total de asistencias filtradas.
+Total de estudiantes presentes.
+Total de docentes presentes.
+Gráfico visual por tipo de persona.
+Tabla de asistencias encontradas.
+Filtros en reportes
+
+Los reportes pueden filtrarse por:
+
+Fecha
+Tipo de persona
+
+Tipos disponibles:
+
+Todos
+Estudiantes
+Docentes
+
+Esto permite consultar, por ejemplo:
+
+Asistencias de una fecha específica
+Solo estudiantes presentes
+Solo docentes presentes
+Todos los registros
+Exportación a Excel
+
+El sistema permite exportar las asistencias filtradas en un archivo compatible con Excel.
+
+El archivo exportado contiene:
+
+ID
+Persona
+Tipo
+DNI
+Fecha
+Hora
+Estado
+Método
+
+Esto permite que el administrador pueda guardar o compartir los reportes.
+
+Impresión o guardado en PDF
+
+El sistema permite generar una vista imprimible del reporte.
+
+Desde el navegador se puede:
+
+Imprimir el reporte
+Guardar como PDF
+
+El reporte incluye:
+
+Título del sistema.
+Fecha filtrada.
+Tipo filtrado.
+Total de registros.
+Tabla de asistencias.
+Tecnologías utilizadas
+Frontend
+HTML5
+CSS3
+JavaScript
+Bootstrap 5
+Bootstrap Icons
+LocalStorage
+SessionStorage
+
+El frontend se encarga de mostrar la interfaz visual, manejar formularios, consumir las APIs y controlar la interacción del usuario.
+
+Backend Java
+Java 21
+Spring Boot
+Spring Web
+Spring Data JPA
+Maven
+
+El backend Java se encarga de gestionar la lógica principal del sistema, las personas, las asistencias y la conexión con MySQL.
+
+Microservicio Python
+Python 3.12
+Flask
+Flask-CORS
+OpenCV
+NumPy
+
+El microservicio Python se encarga del registro y reconocimiento facial.
+
+Base de datos
+MySQL
+XAMPP
+
+La base de datos almacena la información de personas y asistencias.
+
+Control de versiones
+Git
+GitHub
+
+Git y GitHub se usan para guardar el historial del proyecto y compartir el código.
+
+Estructura del proyecto
+sistema-asistencia-facial/
+│
+├── backend-java/
+│   └── API REST desarrollada con Spring Boot
+│
+├── facial-service-python/
+│   └── Microservicio Flask para reconocimiento facial
+│
+├── frontend/
+│   ├── personas.html
+│   ├── css/
+│   │   └── personas.css
+│   └── js/
+│       ├── personas.js
+│       └── auth-admin.js
+│
+├── database/
+│   └── Archivos relacionados con la base de datos
+│
+├── docs/
+│   └── Documentación del proyecto
+│
+├── README.md
+└── .gitignore
+Arquitectura de funcionamiento
+
+El sistema trabaja con una arquitectura separada.
+
+Usuario
+↓
+Frontend HTML, CSS y JavaScript
+↓
+Backend Java Spring Boot
+↓
+Base de datos MySQL
+
+Para el reconocimiento facial se usa otro flujo:
+
+Frontend
+↓
+Microservicio Python Flask
+↓
+OpenCV compara rostros
+↓
+Python devuelve el ID reconocido
+↓
+Java registra asistencia
+↓
+MySQL guarda el registro
 
 Autor
 
 Desarrollado por:
 
 Brayan Jair Chavez Oscor
-
-Proyecto académico de Ingeniería de Sistemas.
-
-Repositorio
-https://github.com/Brayan1262/sistema-asistencia-facial
 
