@@ -868,8 +868,12 @@ function renderTablaAsistencias(asistencias) {
    REPORTES
 ========================= */
 
+let asistenciasReporteGlobal = [];
+
 async function cargarReportes() {
-    if (!tablaUltimasAsistencias && !reporteTotalAsistencias) {
+    const tablaReportes = document.getElementById("tablaUltimasAsistencias");
+
+    if (!tablaReportes && !reporteTotalAsistencias) {
         return;
     }
 
@@ -880,10 +884,10 @@ async function cargarReportes() {
             throw new Error("No se pudo cargar la información de reportes.");
         }
 
-        const asistencias = await response.json();
+        asistenciasReporteGlobal = await response.json();
 
-        actualizarReportes(asistencias);
-        renderUltimasAsistencias(asistencias);
+        prepararFiltrosReportes();
+        aplicarFiltrosReportes();
 
     } catch (error) {
         console.error(error);
@@ -891,7 +895,7 @@ async function cargarReportes() {
         if (tablaUltimasAsistencias) {
             tablaUltimasAsistencias.innerHTML = `
                 <tr>
-                    <td colspan="5" class="text-center text-danger py-4">
+                    <td colspan="6" class="text-center text-danger py-4">
                         Error al cargar reportes. Verifica que Spring Boot esté encendido.
                     </td>
                 </tr>
@@ -900,34 +904,94 @@ async function cargarReportes() {
     }
 }
 
+function prepararFiltrosReportes() {
+    const filtroFecha = document.getElementById("filtroFechaReporte");
+    const btnFiltrar = document.getElementById("btnFiltrarReportes");
+    const btnLimpiar = document.getElementById("btnLimpiarReportes");
+    const btnExcel = document.getElementById("btnExportarExcel");
+    const btnPDF = document.getElementById("btnImprimirPDF");
+
+    if (filtroFecha && !filtroFecha.value) {
+        filtroFecha.value = obtenerFechaActual();
+    }
+
+    if (btnFiltrar && !btnFiltrar.dataset.listener) {
+        btnFiltrar.addEventListener("click", aplicarFiltrosReportes);
+        btnFiltrar.dataset.listener = "true";
+    }
+
+    if (btnLimpiar && !btnLimpiar.dataset.listener) {
+        btnLimpiar.addEventListener("click", () => {
+            const filtroTipo = document.getElementById("filtroTipoReporte");
+
+            if (filtroFecha) filtroFecha.value = "";
+            if (filtroTipo) filtroTipo.value = "TODOS";
+
+            aplicarFiltrosReportes();
+        });
+
+        btnLimpiar.dataset.listener = "true";
+    }
+
+    if (btnExcel && !btnExcel.dataset.listener) {
+        btnExcel.addEventListener("click", exportarReporteExcel);
+        btnExcel.dataset.listener = "true";
+    }
+
+    if (btnPDF && !btnPDF.dataset.listener) {
+        btnPDF.addEventListener("click", imprimirReportePDF);
+        btnPDF.dataset.listener = "true";
+    }
+}
+
+function obtenerAsistenciasFiltradas() {
+    const filtroFecha = document.getElementById("filtroFechaReporte");
+    const filtroTipo = document.getElementById("filtroTipoReporte");
+
+    const fechaSeleccionada = filtroFecha ? filtroFecha.value : "";
+    const tipoSeleccionado = filtroTipo ? filtroTipo.value : "TODOS";
+
+    return asistenciasReporteGlobal.filter(asistencia => {
+        const coincideFecha = !fechaSeleccionada || asistencia.fecha === fechaSeleccionada;
+        const coincideTipo = tipoSeleccionado === "TODOS" || asistencia.persona?.tipoPersona === tipoSeleccionado;
+
+        return coincideFecha && coincideTipo;
+    });
+}
+
+function aplicarFiltrosReportes() {
+    const asistenciasFiltradas = obtenerAsistenciasFiltradas();
+
+    actualizarReportes(asistenciasFiltradas);
+    renderUltimasAsistencias(asistenciasFiltradas);
+    mostrarMensajeReporte(`Se encontraron ${asistenciasFiltradas.length} asistencia(s).`);
+}
+
 function actualizarReportes(asistencias) {
     if (!reporteTotalAsistencias) {
         return;
     }
 
-    const hoy = obtenerFechaActual();
-    const asistenciasHoy = asistencias.filter(a => a.fecha === hoy);
-
-    const estudiantesHoy = asistenciasHoy.filter(a => a.persona?.tipoPersona === "ESTUDIANTE").length;
-    const docentesHoy = asistenciasHoy.filter(a => a.persona?.tipoPersona === "DOCENTE").length;
+    const estudiantes = asistencias.filter(a => a.persona?.tipoPersona === "ESTUDIANTE").length;
+    const docentes = asistencias.filter(a => a.persona?.tipoPersona === "DOCENTE").length;
 
     if (reportePersonas) reportePersonas.textContent = personas.length;
     if (reporteTotalAsistencias) reporteTotalAsistencias.textContent = asistencias.length;
-    if (reporteAsistenciasHoy) reporteAsistenciasHoy.textContent = asistenciasHoy.length;
-    if (reportePresentesHoy) reportePresentesHoy.textContent = asistenciasHoy.length;
-    if (donutTotalReportes) donutTotalReportes.textContent = asistenciasHoy.length;
+    if (reporteAsistenciasHoy) reporteAsistenciasHoy.textContent = estudiantes;
+    if (reportePresentesHoy) reportePresentesHoy.textContent = docentes;
+    if (donutTotalReportes) donutTotalReportes.textContent = asistencias.length;
 
     if (!donutReportes || !leyendaReportes) {
         return;
     }
 
-    if (asistenciasHoy.length === 0) {
+    if (asistencias.length === 0) {
         donutReportes.style.background = "#e2e8f0";
-        leyendaReportes.innerHTML = `<p class="text-muted">No hay asistencias registradas hoy.</p>`;
+        leyendaReportes.innerHTML = `<p class="text-muted">No hay asistencias con los filtros seleccionados.</p>`;
         return;
     }
 
-    const gradosEstudiantes = (estudiantesHoy / asistenciasHoy.length) * 360;
+    const gradosEstudiantes = (estudiantes / asistencias.length) * 360;
 
     donutReportes.style.background = `
         conic-gradient(
@@ -940,17 +1004,17 @@ function actualizarReportes(asistencias) {
         <div class="legend-item">
             <div class="legend-left">
                 <span class="legend-dot" style="background:#2563eb"></span>
-                Estudiantes presentes hoy
+                Estudiantes
             </div>
-            <strong>${estudiantesHoy}</strong>
+            <strong>${estudiantes}</strong>
         </div>
 
         <div class="legend-item">
             <div class="legend-left">
                 <span class="legend-dot" style="background:#7c3aed"></span>
-                Docentes presentes hoy
+                Docentes
             </div>
-            <strong>${docentesHoy}</strong>
+            <strong>${docentes}</strong>
         </div>
     `;
 }
@@ -965,8 +1029,8 @@ function renderUltimasAsistencias(asistencias) {
     if (asistencias.length === 0) {
         tablaUltimasAsistencias.innerHTML = `
             <tr>
-                <td colspan="5" class="text-center text-muted py-4">
-                    Todavía no hay asistencias registradas.
+                <td colspan="6" class="text-center text-muted py-4">
+                    No hay asistencias para mostrar.
                 </td>
             </tr>
         `;
@@ -976,27 +1040,28 @@ function renderUltimasAsistencias(asistencias) {
     asistencias
         .slice()
         .reverse()
-        .slice(0, 8)
         .forEach(asistencia => {
-            const persona = asistencia.persona;
+            const persona = asistencia.persona || {};
 
             const row = document.createElement("tr");
 
             row.innerHTML = `
                 <td>
                     <div class="report-mini-name">
-                        ${persona.nombres} ${persona.apellidos}
+                        ${persona.nombres || ""} ${persona.apellidos || ""}
                     </div>
                     <div class="report-mini-sub">
-                        DNI: ${persona.dni}
+                        ID asistencia: ${asistencia.id}
                     </div>
                 </td>
 
                 <td>
                     <span class="badge-custom ${persona.tipoPersona === "ESTUDIANTE" ? "badge-student" : "badge-teacher"}">
-                        ${persona.tipoPersona}
+                        ${persona.tipoPersona || "SIN TIPO"}
                     </span>
                 </td>
+
+                <td>${persona.dni || "-"}</td>
 
                 <td>
                     <span class="badge-report-date">
@@ -1015,6 +1080,208 @@ function renderUltimasAsistencias(asistencias) {
 
             tablaUltimasAsistencias.appendChild(row);
         });
+}
+
+function exportarReporteExcel() {
+    const asistenciasFiltradas = obtenerAsistenciasFiltradas();
+
+    if (asistenciasFiltradas.length === 0) {
+        mostrarMensajeReporte("No hay datos para exportar.");
+        return;
+    }
+
+    let contenido = "\uFEFF";
+    contenido += "ID,Persona,Tipo,DNI,Fecha,Hora,Estado,Metodo\n";
+
+    asistenciasFiltradas.forEach(asistencia => {
+        const persona = asistencia.persona || {};
+        const nombreCompleto = `${persona.nombres || ""} ${persona.apellidos || ""}`.trim();
+
+        contenido += [
+            asistencia.id,
+            limpiarCSV(nombreCompleto),
+            persona.tipoPersona || "",
+            persona.dni || "",
+            asistencia.fecha || "",
+            asistencia.hora || "",
+            asistencia.estado || "",
+            asistencia.metodoRegistro || ""
+        ].join(",") + "\n";
+    });
+
+    const blob = new Blob([contenido], {
+        type: "text/csv;charset=utf-8;"
+    });
+
+    const url = URL.createObjectURL(blob);
+    const enlace = document.createElement("a");
+
+    enlace.href = url;
+    enlace.download = `reporte_asistencias_${obtenerFechaActual()}.csv`;
+    enlace.click();
+
+    URL.revokeObjectURL(url);
+
+    mostrarMensajeReporte("Reporte exportado correctamente. Puedes abrirlo con Excel.");
+}
+
+function imprimirReportePDF() {
+    const asistenciasFiltradas = obtenerAsistenciasFiltradas();
+
+    if (asistenciasFiltradas.length === 0) {
+        mostrarMensajeReporte("No hay datos para imprimir.");
+        return;
+    }
+
+    const filtroFecha = document.getElementById("filtroFechaReporte")?.value || "Todas";
+    const filtroTipo = document.getElementById("filtroTipoReporte")?.value || "TODOS";
+
+    let filas = "";
+
+    asistenciasFiltradas.forEach(asistencia => {
+        const persona = asistencia.persona || {};
+        const nombreCompleto = `${persona.nombres || ""} ${persona.apellidos || ""}`.trim();
+
+        filas += `
+            <tr>
+                <td>${asistencia.id}</td>
+                <td>${nombreCompleto}</td>
+                <td>${persona.tipoPersona || ""}</td>
+                <td>${persona.dni || ""}</td>
+                <td>${asistencia.fecha || ""}</td>
+                <td>${asistencia.hora || ""}</td>
+                <td>${asistencia.estado || ""}</td>
+                <td>${asistencia.metodoRegistro || ""}</td>
+            </tr>
+        `;
+    });
+
+    const ventana = window.open("", "_blank");
+
+    ventana.document.write(`
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <title>Reporte de Asistencias</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    padding: 30px;
+                    color: #0f172a;
+                }
+
+                h1 {
+                    text-align: center;
+                    margin-bottom: 5px;
+                }
+
+                .subtitle {
+                    text-align: center;
+                    color: #64748b;
+                    margin-bottom: 25px;
+                }
+
+                .info {
+                    margin-bottom: 20px;
+                    padding: 12px;
+                    background: #eff6ff;
+                    border-radius: 8px;
+                }
+
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    font-size: 12px;
+                }
+
+                th {
+                    background: #2563eb;
+                    color: white;
+                    padding: 9px;
+                    border: 1px solid #ddd;
+                }
+
+                td {
+                    padding: 8px;
+                    border: 1px solid #ddd;
+                }
+
+                tr:nth-child(even) {
+                    background: #f8fafc;
+                }
+
+                .footer {
+                    margin-top: 25px;
+                    font-size: 12px;
+                    color: #64748b;
+                    text-align: center;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>Reporte de Asistencias</h1>
+            <p class="subtitle">Sistema de Asistencia Facial</p>
+
+            <div class="info">
+                <strong>Fecha filtrada:</strong> ${filtroFecha}<br>
+                <strong>Tipo filtrado:</strong> ${filtroTipo}<br>
+                <strong>Total registros:</strong> ${asistenciasFiltradas.length}
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Persona</th>
+                        <th>Tipo</th>
+                        <th>DNI</th>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>Estado</th>
+                        <th>Método</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${filas}
+                </tbody>
+            </table>
+
+            <div class="footer">
+                Reporte generado automáticamente por el Sistema de Asistencia Facial.
+            </div>
+
+            <script>
+                window.onload = function() {
+                    window.print();
+                };
+            </script>
+        </body>
+        </html>
+    `);
+
+    ventana.document.close();
+
+    mostrarMensajeReporte("Ventana de impresión abierta. Puedes guardar como PDF.");
+}
+
+function limpiarCSV(valor) {
+    const texto = String(valor).replace(/"/g, '""');
+    return `"${texto}"`;
+}
+
+function mostrarMensajeReporte(mensaje) {
+    const mensajeReporte = document.getElementById("mensajeReporte");
+
+    if (!mensajeReporte) {
+        return;
+    }
+
+    mensajeReporte.textContent = mensaje;
+
+    setTimeout(() => {
+        mensajeReporte.textContent = "";
+    }, 4000);
 }
 
 /* =========================
