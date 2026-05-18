@@ -345,6 +345,33 @@
                             <p>Usa una foto clara del rostro</p>
                         </div>
 
+                        <div class="toggle-camera-option mt-3 mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="useCameraAsistencia">
+                                <label class="form-check-label" for="useCameraAsistencia">
+                                    <i class="bi bi-camera-video"></i> Usar cámara en vivo
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="camera-section d-none" id="cameraSectionAsistencia">
+                            <h6 class="mb-3"><i class="bi bi-camera-video-fill"></i> Cámara en vivo</h6>
+                            
+                            <video id="videoStreamAsistencia" class="video-stream mb-3" autoplay playsinline muted></video>
+                            
+                            <div class="button-group gap-2 mb-3">
+                                <button type="button" class="btn btn-secondary w-100" id="btnToggleCameraAsistencia">
+                                    <i class="bi bi-play-fill"></i> Iniciar cámara
+                                </button>
+                                <button type="button" class="btn btn-success w-100 d-none" id="btnCaptureFotoAsistencia">
+                                    <i class="bi bi-camera-fill"></i> Capturar foto
+                                </button>
+                                <button type="button" class="btn btn-danger w-100 d-none" id="btnStopCameraAsistencia">
+                                    <i class="bi bi-stop-fill"></i> Detener
+                                </button>
+                            </div>
+                        </div>
+
                         <button id="btnReconocerPersona" class="btn btn-primary-custom w-100 mt-3">
                             <i class="bi bi-search"></i> Reconocer persona
                         </button>

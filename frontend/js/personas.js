@@ -49,6 +49,19 @@ const resultadoReconocimiento = document.getElementById("resultadoReconocimiento
 const btnActualizarAsistencias = document.getElementById("btnActualizarAsistencias");
 const tablaAsistencias = document.getElementById("tablaAsistencias");
 
+// Camera elements - Asistencia
+const useCameraAsistencia = document.getElementById("useCameraAsistencia");
+const cameraSectionAsistencia = document.getElementById("cameraSectionAsistencia");
+const videoStreamAsistencia = document.getElementById("videoStreamAsistencia");
+const btnToggleCameraAsistencia = document.getElementById("btnToggleCameraAsistencia");
+const btnCaptureFotoAsistencia = document.getElementById("btnCaptureFotoAsistencia");
+const btnStopCameraAsistencia = document.getElementById("btnStopCameraAsistencia");
+
+// Camera state - Asistencia
+let videoStreamActive = null;
+let isCameraRunningAsistencia = false;
+let capturedFileAsistencia = null;
+
 const btnPerfilRapido = document.getElementById("btnPerfilRapido");
 const formPerfil = document.getElementById("formPerfil");
 const adminNombre = document.getElementById("adminNombre");
@@ -471,12 +484,113 @@ if (fotoAsistencia) {
     });
 }
 
+// Camera functions - Asistencia
+async function iniciarCamaraAsistencia() {
+    try {
+        videoStreamActive = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+            audio: false
+        });
+        
+        videoStreamAsistencia.srcObject = videoStreamActive;
+        isCameraRunningAsistencia = true;
+        
+        btnToggleCameraAsistencia.classList.add("d-none");
+        btnCaptureFotoAsistencia.classList.remove("d-none");
+        btnStopCameraAsistencia.classList.remove("d-none");
+        
+        mostrarMensajeAsistencia("Cámara iniciada correctamente.", "primary");
+    } catch (error) {
+        mostrarMensajeAsistencia("Permiso de cámara denegado o no disponible: " + error.message, "danger");
+        console.error("Error al acceder a cámara:", error);
+    }
+}
+
+function detenerCamaraAsistencia() {
+    if (videoStreamActive) {
+        videoStreamActive.getTracks().forEach(track => track.stop());
+        videoStreamActive = null;
+    }
+    
+    videoStreamAsistencia.srcObject = null;
+    isCameraRunningAsistencia = false;
+    
+    btnToggleCameraAsistencia.classList.remove("d-none");
+    btnCaptureFotoAsistencia.classList.add("d-none");
+    btnStopCameraAsistencia.classList.add("d-none");
+    
+    previewAsistencia.innerHTML = `
+        <div>
+            <i class="bi bi-image"></i>
+            <p>Sin imagen seleccionada</p>
+        </div>
+    `;
+    
+    mostrarMensajeAsistencia("Cámara detenida.", "info");
+}
+
+function capturarFotoAsistencia() {
+    if (!isCameraRunningAsistencia) {
+        mostrarMensajeAsistencia("La cámara no está activa.", "danger");
+        return;
+    }
+    
+    const canvas = document.createElement("canvas");
+    canvas.width = videoStreamAsistencia.videoWidth;
+    canvas.height = videoStreamAsistencia.videoHeight;
+    
+    if (canvas.width === 0 || canvas.height === 0) {
+        mostrarMensajeAsistencia("La cámara aún no está lista. Intenta nuevamente.", "warning");
+        return;
+    }
+    
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(videoStreamAsistencia, 0, 0);
+    
+    canvas.toBlob(blob => {
+        if (!blob) {
+            mostrarMensajeAsistencia("Error al capturar la foto. Intenta nuevamente.", "danger");
+            return;
+        }
+        
+        const file = new File([blob], "captura-asistencia-" + Date.now() + ".jpg", { type: "image/jpeg" });
+        capturedFileAsistencia = file;
+        
+        const imageUrl = URL.createObjectURL(blob);
+        previewAsistencia.innerHTML = `
+            <img src="${imageUrl}" alt="Captura de cámara" style="width: 100%; border-radius: 8px;">
+        `;
+        
+        mostrarMensajeAsistencia("Foto capturada correctamente. Presiona 'Reconocer persona'.", "success");
+    }, "image/jpeg", 0.95);
+}
+
+// Event listeners - Camera toggle
+useCameraAsistencia.addEventListener("change", (e) => {
+    cameraSectionAsistencia.classList.toggle("d-none", !e.target.checked);
+    
+    if (!e.target.checked) {
+        // Si se desactiva, detener la cámara
+        if (isCameraRunningAsistencia) {
+            detenerCamaraAsistencia();
+        }
+        capturedFileAsistencia = null;
+    }
+});
+
+btnToggleCameraAsistencia.addEventListener("click", iniciarCamaraAsistencia);
+
+btnCaptureFotoAsistencia.addEventListener("click", capturarFotoAsistencia);
+
+btnStopCameraAsistencia.addEventListener("click", detenerCamaraAsistencia);
+
 if (btnReconocerPersona) {
     btnReconocerPersona.addEventListener("click", async () => {
-        const file = fotoAsistencia.files[0];
+        // Prioridad: archivo capturado de cámara, luego archivo subido
+        const file = capturedFileAsistencia || fotoAsistencia.files[0];
 
         if (!file) {
-            mostrarMensajeAsistencia("Selecciona una imagen para reconocer.", "danger");
+            mostrarMensajeAsistencia("Selecciona una imagen o captura una foto con la cámara.", "danger");
             return;
         }
 
