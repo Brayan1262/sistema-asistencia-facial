@@ -415,28 +415,101 @@
 
         <!-- REPORTES -->
         <section id="section-reportes" class="page-section">
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="report-box">
+
+            <div class="row g-4 mb-4">
+                <div class="col-md-3">
+                    <div class="report-box report-blue">
+                        <i class="bi bi-people-fill"></i>
                         <h2 id="reportePersonas">0</h2>
                         <p>Total personas</p>
                     </div>
                 </div>
 
-                <div class="col-md-4">
-                    <div class="report-box">
-                        <h2 id="reporteEstudiantes">0</h2>
-                        <p>Estudiantes</p>
+                <div class="col-md-3">
+                    <div class="report-box report-green">
+                        <i class="bi bi-calendar-check-fill"></i>
+                        <h2 id="reporteTotalAsistencias">0</h2>
+                        <p>Total asistencias</p>
                     </div>
                 </div>
 
-                <div class="col-md-4">
-                    <div class="report-box">
-                        <h2 id="reporteDocentes">0</h2>
-                        <p>Docentes</p>
+                <div class="col-md-3">
+                    <div class="report-box report-purple">
+                        <i class="bi bi-clock-history"></i>
+                        <h2 id="reporteAsistenciasHoy">0</h2>
+                        <p>Asistencias de hoy</p>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="report-box report-orange">
+                        <i class="bi bi-person-check-fill"></i>
+                        <h2 id="reportePresentesHoy">0</h2>
+                        <p>Presentes hoy</p>
                     </div>
                 </div>
             </div>
+
+            <div class="row g-4">
+                <div class="col-lg-5">
+                    <div class="glass-card h-100">
+                        <div class="card-title-row">
+                            <div>
+                                <h4>Asistencia por tipo de persona</h4>
+                                <p>Resumen visual de estudiantes y docentes presentes hoy.</p>
+                            </div>
+                        </div>
+
+                        <div class="chart-area report-chart-area">
+                            <div class="donut-chart" id="donutReportes">
+                                <div class="donut-center">
+                                    <strong id="donutTotalReportes">0</strong>
+                                    <span>Hoy</span>
+                                </div>
+                            </div>
+
+                            <div class="legend-list" id="leyendaReportes"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-7">
+                    <div class="glass-card h-100">
+                        <div class="card-title-row">
+                            <div>
+                                <h4>Últimas asistencias</h4>
+                                <p>Registros recientes marcados mediante reconocimiento facial.</p>
+                            </div>
+
+                            <button class="btn btn-light-custom" id="btnActualizarReportes">
+                                <i class="bi bi-arrow-clockwise"></i> Actualizar
+                            </button>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table custom-table align-middle">
+                                <thead>
+                                <tr>
+                                    <th>Persona</th>
+                                    <th>Tipo</th>
+                                    <th>Fecha</th>
+                                    <th>Hora</th>
+                                    <th>Estado</th>
+                                </tr>
+                                </thead>
+                                <tbody id="tablaUltimasAsistencias">
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">
+                                        Cargando últimas asistencias...
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </section>
 
         <!-- PERFIL -->

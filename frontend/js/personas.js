@@ -20,9 +20,16 @@ const filterBtns = document.querySelectorAll(".filter-btn");
 const totalPersonas = document.getElementById("totalPersonas");
 const totalEstudiantes = document.getElementById("totalEstudiantes");
 const totalDocentes = document.getElementById("totalDocentes");
+
 const reportePersonas = document.getElementById("reportePersonas");
-const reporteEstudiantes = document.getElementById("reporteEstudiantes");
-const reporteDocentes = document.getElementById("reporteDocentes");
+const reporteTotalAsistencias = document.getElementById("reporteTotalAsistencias");
+const reporteAsistenciasHoy = document.getElementById("reporteAsistenciasHoy");
+const reportePresentesHoy = document.getElementById("reportePresentesHoy");
+const donutReportes = document.getElementById("donutReportes");
+const donutTotalReportes = document.getElementById("donutTotalReportes");
+const leyendaReportes = document.getElementById("leyendaReportes");
+const tablaUltimasAsistencias = document.getElementById("tablaUltimasAsistencias");
+const btnActualizarReportes = document.getElementById("btnActualizarReportes");
 
 const donutTipoPersona = document.getElementById("donutTipoPersona");
 const donutTotalPersonas = document.getElementById("donutTotalPersonas");
@@ -69,6 +76,7 @@ const pageInfo = {
 document.addEventListener("DOMContentLoaded", () => {
     cargarPersonas();
     cargarAsistencias();
+    cargarReportes();
 });
 
 /* =========================
@@ -94,6 +102,10 @@ menuLinks.forEach(link => {
 
         if (section === "asistencia") {
             cargarAsistencias();
+        }
+
+        if (section === "reportes") {
+            cargarReportes();
         }
     });
 });
@@ -174,6 +186,7 @@ formPersona.addEventListener("submit", async (event) => {
         tipoPersonaRegistro.dispatchEvent(new Event("change"));
 
         await cargarPersonas();
+        await cargarReportes();
 
     } catch (error) {
         mostrarAlerta(error.message, "danger");
@@ -185,6 +198,10 @@ btnActualizarPersonas.addEventListener("click", cargarPersonas);
 
 if (btnActualizarAsistencias) {
     btnActualizarAsistencias.addEventListener("click", cargarAsistencias);
+}
+
+if (btnActualizarReportes) {
+    btnActualizarReportes.addEventListener("click", cargarReportes);
 }
 
 filterBtns.forEach(btn => {
@@ -291,9 +308,9 @@ function actualizarDashboard() {
     totalEstudiantes.textContent = estudiantes;
     totalDocentes.textContent = docentes;
 
-    reportePersonas.textContent = personas.length;
-    reporteEstudiantes.textContent = estudiantes;
-    reporteDocentes.textContent = docentes;
+    if (reportePersonas) {
+        reportePersonas.textContent = personas.length;
+    }
 
     donutTotalPersonas.textContent = personas.length;
 
@@ -560,6 +577,7 @@ if (btnReconocerPersona) {
             `;
 
             await cargarAsistencias();
+            await cargarReportes();
 
             mostrarMensajeAsistencia("Persona reconocida correctamente.", "success");
 
@@ -666,6 +684,157 @@ function renderTablaAsistencias(asistencias) {
 
             tablaAsistencias.appendChild(row);
         });
+}
+
+/* =========================
+   REPORTES
+========================= */
+
+async function cargarReportes() {
+    try {
+        const response = await fetch(API_ASISTENCIAS);
+
+        if (!response.ok) {
+            throw new Error("No se pudo cargar la información de reportes.");
+        }
+
+        const asistencias = await response.json();
+
+        actualizarReportes(asistencias);
+        renderUltimasAsistencias(asistencias);
+
+    } catch (error) {
+        console.error(error);
+
+        if (tablaUltimasAsistencias) {
+            tablaUltimasAsistencias.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center text-danger py-4">
+                        Error al cargar reportes. Verifica que Spring Boot esté encendido.
+                    </td>
+                </tr>
+            `;
+        }
+    }
+}
+
+function actualizarReportes(asistencias) {
+    if (!reporteTotalAsistencias) return;
+
+    const hoy = obtenerFechaActual();
+    const asistenciasHoy = asistencias.filter(a => a.fecha === hoy);
+
+    const estudiantesHoy = asistenciasHoy.filter(a => a.persona?.tipoPersona === "ESTUDIANTE").length;
+    const docentesHoy = asistenciasHoy.filter(a => a.persona?.tipoPersona === "DOCENTE").length;
+
+    reportePersonas.textContent = personas.length;
+    reporteTotalAsistencias.textContent = asistencias.length;
+    reporteAsistenciasHoy.textContent = asistenciasHoy.length;
+    reportePresentesHoy.textContent = asistenciasHoy.length;
+
+    donutTotalReportes.textContent = asistenciasHoy.length;
+
+    if (asistenciasHoy.length === 0) {
+        donutReportes.style.background = "#e2e8f0";
+        leyendaReportes.innerHTML = `<p class="text-muted">No hay asistencias registradas hoy.</p>`;
+        return;
+    }
+
+    const gradosEstudiantes = (estudiantesHoy / asistenciasHoy.length) * 360;
+
+    donutReportes.style.background = `
+        conic-gradient(
+            #2563eb 0deg ${gradosEstudiantes}deg,
+            #7c3aed ${gradosEstudiantes}deg 360deg
+        )
+    `;
+
+    leyendaReportes.innerHTML = `
+        <div class="legend-item">
+            <div class="legend-left">
+                <span class="legend-dot" style="background:#2563eb"></span>
+                Estudiantes presentes hoy
+            </div>
+            <strong>${estudiantesHoy}</strong>
+        </div>
+
+        <div class="legend-item">
+            <div class="legend-left">
+                <span class="legend-dot" style="background:#7c3aed"></span>
+                Docentes presentes hoy
+            </div>
+            <strong>${docentesHoy}</strong>
+        </div>
+    `;
+}
+
+function renderUltimasAsistencias(asistencias) {
+    if (!tablaUltimasAsistencias) return;
+
+    tablaUltimasAsistencias.innerHTML = "";
+
+    if (asistencias.length === 0) {
+        tablaUltimasAsistencias.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center text-muted py-4">
+                    Todavía no hay asistencias registradas.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    asistencias
+        .slice()
+        .reverse()
+        .slice(0, 8)
+        .forEach(asistencia => {
+            const persona = asistencia.persona;
+
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+                <td>
+                    <div class="report-mini-name">
+                        ${persona.nombres} ${persona.apellidos}
+                    </div>
+                    <div class="report-mini-sub">
+                        DNI: ${persona.dni}
+                    </div>
+                </td>
+
+                <td>
+                    <span class="badge-custom ${persona.tipoPersona === "ESTUDIANTE" ? "badge-student" : "badge-teacher"}">
+                        ${persona.tipoPersona}
+                    </span>
+                </td>
+
+                <td>
+                    <span class="badge-report-date">
+                        ${asistencia.fecha}
+                    </span>
+                </td>
+
+                <td>${asistencia.hora}</td>
+
+                <td>
+                    <span class="badge-present">
+                        ${asistencia.estado}
+                    </span>
+                </td>
+            `;
+
+            tablaUltimasAsistencias.appendChild(row);
+        });
+}
+
+function obtenerFechaActual() {
+    const fecha = new Date();
+    const year = fecha.getFullYear();
+    const month = String(fecha.getMonth() + 1).padStart(2, "0");
+    const day = String(fecha.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
 }
 
 /* =========================

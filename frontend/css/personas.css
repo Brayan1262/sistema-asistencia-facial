@@ -612,7 +612,8 @@ body {
     color: var(--dark);
 }
 
-.attendance-sub {
+.attendance-sub,
+.report-mini-sub {
     font-size: 13px;
     color: var(--muted);
 }
@@ -636,22 +637,75 @@ body {
 }
 
 .report-box {
-    background: rgba(255,255,255,0.9);
+    background: rgba(255,255,255,0.92);
     border-radius: 26px;
     box-shadow: var(--shadow);
-    padding: 34px;
+    padding: 28px;
     text-align: center;
+    border: 1px solid rgba(255,255,255,0.8);
+    min-height: 180px;
+    display: grid;
+    place-items: center;
+    transition: 0.25s ease;
+}
+
+.report-box:hover {
+    transform: translateY(-4px);
+}
+
+.report-box i {
+    font-size: 34px;
+    margin-bottom: 6px;
 }
 
 .report-box h2 {
-    color: var(--blue);
     font-weight: 900;
-    font-size: 42px;
+    font-size: 38px;
+    margin: 0;
 }
 
 .report-box p {
     color: var(--muted);
     font-weight: 800;
+    margin: 0;
+}
+
+.report-blue i,
+.report-blue h2 {
+    color: var(--blue);
+}
+
+.report-green i,
+.report-green h2 {
+    color: var(--green);
+}
+
+.report-purple i,
+.report-purple h2 {
+    color: var(--purple);
+}
+
+.report-orange i,
+.report-orange h2 {
+    color: var(--orange);
+}
+
+.report-chart-area {
+    grid-template-columns: 220px 1fr;
+}
+
+.report-mini-name {
+    font-weight: 900;
+    color: var(--dark);
+}
+
+.badge-report-date {
+    background: #f1f5f9;
+    color: #334155;
+    padding: 6px 11px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 900;
 }
 
 .profile-card {
@@ -736,7 +790,8 @@ body {
     }
 
     .chart-area,
-    .config-grid {
+    .config-grid,
+    .report-chart-area {
         grid-template-columns: 1fr;
     }
 
