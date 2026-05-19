@@ -1,0 +1,101 @@
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-logo">
+        <i class="bi bi-person-bounding-box"></i>
+      </div>
+
+      <div>
+        <h4>Sistema Facial</h4>
+        <span>Angular Web</span>
+      </div>
+    </div>
+
+    <nav class="menu">
+      <a
+        routerLink="/"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="menu-link"
+      >
+        <i class="bi bi-grid-1x2-fill"></i>
+        <span>Dashboard</span>
+      </a>
+
+      <a routerLink="/personas" routerLinkActive="active" class="menu-link">
+        <i class="bi bi-people-fill"></i>
+        <span>Personas</span>
+      </a>
+
+      <a routerLink="/reconocimiento" routerLinkActive="active" class="menu-link">
+        <i class="bi bi-camera-fill"></i>
+        <span>Reconocimiento</span>
+      </a>
+
+      <a routerLink="/asistencia" routerLinkActive="active" class="menu-link">
+        <i class="bi bi-calendar-check-fill"></i>
+        <span>Asistencia</span>
+      </a>
+
+      <a routerLink="/reportes" routerLinkActive="active" class="menu-link">
+        <i class="bi bi-pie-chart-fill"></i>
+        <span>Reportes</span>
+      </a>
+
+      <a routerLink="/perfil" routerLinkActive="active" class="menu-link">
+        <i class="bi bi-person-circle"></i>
+        <span>Perfil</span>
+      </a>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-title">
+        <span class="eyebrow">Panel administrativo</span>
+        <h1>Sistema de Asistencia Facial</h1>
+        <p>Frontend oficial desarrollado con Angular.</p>
+      </div>
+
+    <div class="topbar-actions">
+  <a routerLink="/perfil" class="admin-chip">
+    <div
+      class="admin-avatar"
+      [style.background-image]="admin.foto ? 'url(' + admin.foto + ')' : 'none'"
+      [class.has-photo]="admin.foto"
+    >
+      @if (!admin.foto) {
+        {{ obtenerIniciales() }}
+      }
+    </div>
+
+    <div class="admin-info">
+      <strong>{{ admin.nombres }} {{ admin.apellidos }}</strong>
+      <span>{{ admin.cargo }}</span>
+    </div>
+
+    <i class="bi bi-chevron-right admin-arrow"></i>
+  </a>
+
+  <button
+    type="button"
+    class="btn btn-theme-toggle"
+    (click)="cambiarTema()"
+    [title]="temaOscuro ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+  >
+    <i [class]="temaOscuro ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'"></i>
+    <span>{{ temaOscuro ? 'Claro' : 'Oscuro' }}</span>
+  </button>
+
+  <button class="btn btn-logout" (click)="cerrarSesion()">
+    <i class="bi bi-box-arrow-right me-1"></i>
+    Cerrar sesión
+  </button>
+</div>
+    </header>
+
+    <section class="page-fade">
+      <router-outlet></router-outlet>
+    </section>
+  </main>
+</div>

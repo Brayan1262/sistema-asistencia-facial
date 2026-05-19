@@ -1,0 +1,167 @@
+@if (mensaje) {
+  <div class="alert alert-success">
+    {{ mensaje }}
+  </div>
+}
+
+<section class="row g-4">
+  <div class="col-lg-5">
+    <div class="profile-card">
+      <div class="profile-cover"></div>
+
+      <div class="profile-body">
+        <div
+          class="profile-photo"
+          [style.background-image]="admin.foto ? 'url(' + admin.foto + ')' : 'none'"
+          [class.has-photo]="admin.foto"
+        >
+          @if (!admin.foto) {
+            {{ obtenerIniciales() }}
+          }
+        </div>
+
+        <h3>{{ admin.nombres }} {{ admin.apellidos }}</h3>
+        <p>{{ admin.cargo }} - {{ admin.institucion }}</p>
+
+        <div class="profile-data">
+          <div>
+            <strong>Correo:</strong>
+            <span>{{ admin.correo }}</span>
+          </div>
+
+          <div>
+            <strong>Teléfono:</strong>
+            <span>{{ admin.telefono }}</span>
+          </div>
+
+          <div>
+            <strong>Institución:</strong>
+            <span>{{ admin.institucion }}</span>
+          </div>
+
+          <div>
+            <strong>Cargo:</strong>
+            <span>{{ admin.cargo }}</span>
+          </div>
+        </div>
+
+        <div class="profile-description mt-3">
+          {{ admin.descripcion }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="glass-card">
+      <div class="card-title-row">
+        <div>
+          <h4>Editar perfil del administrador</h4>
+          <p>Actualiza los datos visibles del panel administrativo.</p>
+        </div>
+      </div>
+
+      <form (ngSubmit)="guardarPerfil()">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Nombres</label>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="admin.nombres"
+              name="nombres"
+              placeholder="Ej. Brayan Jair"
+            />
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Apellidos</label>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="admin.apellidos"
+              name="apellidos"
+              placeholder="Ej. Chavez Oscor"
+            />
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Correo</label>
+            <input
+              type="email"
+              class="form-control"
+              [(ngModel)]="admin.correo"
+              name="correo"
+            />
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Teléfono</label>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="admin.telefono"
+              name="telefono"
+            />
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Institución</label>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="admin.institucion"
+              name="institucion"
+            />
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Cargo</label>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="admin.cargo"
+              name="cargo"
+            />
+          </div>
+
+          <div class="col-md-12">
+            <label class="form-label">Foto de perfil</label>
+            <input
+              type="file"
+              accept="image/*"
+              class="form-control"
+              (change)="seleccionarFoto($event)"
+            />
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Descripción</label>
+            <textarea
+              class="form-control"
+              rows="4"
+              [(ngModel)]="admin.descripcion"
+              name="descripcion"
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="button-group-profile mt-4">
+          <button class="btn btn-primary-custom">
+            <i class="bi bi-save-fill me-1"></i>
+            Guardar cambios
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-light-custom"
+            (click)="restaurarPerfil()"
+          >
+            <i class="bi bi-arrow-counterclockwise me-1"></i>
+            Restaurar datos
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>

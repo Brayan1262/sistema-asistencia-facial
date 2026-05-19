@@ -1,0 +1,284 @@
+@if (error) {
+  <div class="alert alert-danger">
+    {{ error }}
+  </div>
+}
+
+@if (mensaje) {
+  <div class="alert alert-success">
+    {{ mensaje }}
+  </div>
+}
+
+<section class="glass-card mb-4">
+  <div class="card-title-row">
+    <div>
+      <h4>Filtros de reportes</h4>
+      <p>Consulta asistencias por fecha, tipo de persona y estado.</p>
+    </div>
+
+    <button class="btn btn-light-custom" (click)="cargarDatos()">
+      <i class="bi bi-arrow-clockwise me-1"></i>
+      Actualizar
+    </button>
+  </div>
+
+  <div class="row g-3 align-items-end">
+    <div class="col-md-3">
+      <label class="form-label">Fecha inicio</label>
+      <input
+        type="date"
+        class="form-control"
+        [(ngModel)]="fechaInicio"
+        name="fechaInicio"
+      />
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">Fecha fin</label>
+      <input
+        type="date"
+        class="form-control"
+        [(ngModel)]="fechaFin"
+        name="fechaFin"
+      />
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">Tipo de persona</label>
+      <select class="form-select" [(ngModel)]="tipoFiltro" name="tipoFiltro">
+        <option value="TODOS">Todos</option>
+        <option value="ESTUDIANTE">Estudiantes</option>
+        <option value="DOCENTE">Docentes</option>
+      </select>
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">Estado</label>
+      <select class="form-select" [(ngModel)]="estadoFiltro" name="estadoFiltro">
+        <option value="TODOS">Todos</option>
+        <option value="PRESENTE">Presente</option>
+        <option value="TARDANZA">Tardanza</option>
+        <option value="FALTA">Falta</option>
+        <option value="JUSTIFICADO">Justificado</option>
+      </select>
+    </div>
+
+    <div class="col-md-6">
+      <button class="btn btn-primary-custom w-100" (click)="aplicarFiltros()">
+        <i class="bi bi-funnel-fill me-1"></i>
+        Filtrar
+      </button>
+    </div>
+
+    <div class="col-md-6">
+      <button class="btn btn-light-custom w-100" (click)="limpiarFiltros()">
+        <i class="bi bi-eraser-fill me-1"></i>
+        Limpiar
+      </button>
+    </div>
+
+    <div class="col-md-6">
+      <button class="btn btn-primary-custom w-100" (click)="exportarExcel()">
+        <i class="bi bi-file-earmark-spreadsheet-fill me-1"></i>
+        Exportar Excel
+      </button>
+    </div>
+
+    <div class="col-md-6">
+      <button class="btn btn-primary-custom w-100" (click)="imprimirPDF()">
+        <i class="bi bi-file-earmark-pdf-fill me-1"></i>
+        Imprimir / Guardar PDF
+      </button>
+    </div>
+  </div>
+</section>
+
+<section class="manual-attendance-box mb-4">
+  <div class="row g-3 align-items-end">
+    <div class="col-md-8">
+      <h5>Registrar falta manual</h5>
+      <p>Selecciona una persona activa para registrar una falta del día actual.</p>
+
+      <select
+        class="form-select"
+        [(ngModel)]="personaFaltaId"
+        name="personaFaltaId"
+      >
+        <option [ngValue]="null">Selecciona una persona</option>
+
+        @for (persona of obtenerPersonasActivas(); track persona.id) {
+          <option [ngValue]="persona.id">
+            {{ persona.nombres }} {{ persona.apellidos }} - {{ persona.tipoPersona }}
+          </option>
+        }
+      </select>
+    </div>
+
+    <div class="col-md-4">
+      <button class="btn btn-danger w-100 fw-bold" (click)="registrarFaltaManual()">
+        <i class="bi bi-person-x-fill me-1"></i>
+        Registrar falta
+      </button>
+    </div>
+  </div>
+</section>
+
+<section class="row g-4 mb-4">
+  <div class="col-md-3">
+    <div class="report-box report-blue">
+      <i class="bi bi-people-fill"></i>
+      <h2>{{ totalPersonas }}</h2>
+      <p>Total personas</p>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="report-box report-green">
+      <i class="bi bi-calendar-check-fill"></i>
+      <h2>{{ totalAsistenciasFiltradas }}</h2>
+      <p>Asistencias filtradas</p>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="report-box report-purple">
+      <i class="bi bi-mortarboard-fill"></i>
+      <h2>{{ totalEstudiantes }}</h2>
+      <p>Estudiantes</p>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="report-box report-orange">
+      <i class="bi bi-person-workspace"></i>
+      <h2>{{ totalDocentes }}</h2>
+      <p>Docentes</p>
+    </div>
+  </div>
+</section>
+
+<section class="row g-4 mb-4">
+  <div class="col-md-3">
+    <div class="status-box">
+      <span class="badge-present">PRESENTE</span>
+      <strong>{{ totalPresentes }}</strong>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="status-box">
+      <span class="badge-tardanza">TARDANZA</span>
+      <strong>{{ totalTardanzas }}</strong>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="status-box">
+      <span class="badge-falta">FALTA</span>
+      <strong>{{ totalFaltas }}</strong>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="status-box">
+      <span class="badge-justificado">JUSTIFICADO</span>
+      <strong>{{ totalJustificados }}</strong>
+    </div>
+  </div>
+</section>
+
+<section class="glass-card">
+  <div class="card-title-row">
+    <div>
+      <h4>Asistencias encontradas</h4>
+      <p>Registros filtrados listos para exportar o modificar.</p>
+    </div>
+  </div>
+
+  @if (cargando) {
+    <div class="alert alert-info">
+      Cargando reportes...
+    </div>
+  } @else if (asistenciasFiltradas.length === 0) {
+    <div class="text-muted py-4">
+      No hay asistencias para mostrar.
+    </div>
+  } @else {
+    <div class="table-responsive">
+      <table class="table custom-table align-middle">
+        <thead>
+          <tr>
+            <th>Persona</th>
+            <th>Tipo</th>
+            <th>DNI</th>
+            <th>Fecha</th>
+            <th>Hora</th>
+            <th>Estado</th>
+            <th>Cambiar estado</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (asistencia of obtenerAsistenciasOrdenadas(); track asistencia.id) {
+            <tr>
+              <td>
+                <div class="person-name">
+                  {{ asistencia.persona?.nombres || '' }}
+                  {{ asistencia.persona?.apellidos || '' }}
+                </div>
+
+                <div class="person-sub">
+                  ID asistencia: {{ asistencia.id }}
+                </div>
+              </td>
+
+              <td>
+                <span
+                  class="badge-custom"
+                  [class.badge-student]="asistencia.persona?.tipoPersona === 'ESTUDIANTE'"
+                  [class.badge-teacher]="asistencia.persona?.tipoPersona === 'DOCENTE'"
+                >
+                  {{ asistencia.persona?.tipoPersona || 'SIN TIPO' }}
+                </span>
+              </td>
+
+              <td>{{ asistencia.persona?.dni || '-' }}</td>
+              <td>{{ asistencia.fecha }}</td>
+              <td>{{ asistencia.hora }}</td>
+
+              <td>
+                <span [class]="obtenerClaseEstado(asistencia.estado)">
+                  {{ asistencia.estado }}
+                </span>
+              </td>
+
+              <td>
+                <div class="estado-actions">
+                  <select
+                    class="form-select form-select-sm"
+                    #estadoSelect
+                    [value]="asistencia.estado"
+                  >
+                    @for (estado of estadosDisponibles; track estado) {
+                      <option [value]="estado">
+                        {{ estado }}
+                      </option>
+                    }
+                  </select>
+
+                  <button
+                    class="btn btn-sm btn-light-custom"
+                    (click)="cambiarEstadoAsistencia(asistencia, estadoSelect.value)"
+                  >
+                    Guardar
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
