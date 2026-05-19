@@ -1,0 +1,273 @@
+@if (error) {
+  <div class="alert alert-danger">
+    {{ error }}
+  </div>
+}
+
+@if (mensaje) {
+  <div class="alert alert-info">
+    {{ mensaje }}
+  </div>
+}
+
+<section class="row g-4">
+  <div class="col-lg-5">
+    <div class="glass-card">
+      <div class="card-title-row">
+        <div>
+          <h4>Reconocer persona</h4>
+          <p>Sube una imagen o usa la cámara para tomar asistencia.</p>
+        </div>
+      </div>
+
+      <div class="upload-zone">
+        <input
+          id="fotoAsistenciaAngular"
+          type="file"
+          accept="image/*"
+          class="form-control mb-3"
+          (change)="seleccionarImagen($event)"
+        />
+
+        <i class="bi bi-camera-fill"></i>
+        <h5>Subir imagen para reconocer</h5>
+        <p>Usa una foto clara del rostro</p>
+      </div>
+
+      <div class="camera-toggle mt-3">
+        <label class="form-check-label">
+          <input
+            type="checkbox"
+            class="form-check-input me-2"
+            [checked]="usarCamara"
+            (change)="activarUsoCamara($event)"
+          />
+          <i class="bi bi-camera-video me-1"></i>
+          Usar cámara en vivo
+        </label>
+      </div>
+
+      @if (usarCamara) {
+        <div class="camera-section mt-3">
+          <h6>
+            <i class="bi bi-camera-video-fill"></i>
+            Cámara en vivo
+          </h6>
+
+          <video
+            #videoCamara
+            class="video-stream mb-3"
+            autoplay
+            playsinline
+            muted
+          ></video>
+
+          <div class="button-group">
+            @if (!camaraActiva) {
+              <button
+                type="button"
+                class="btn btn-secondary"
+                (click)="iniciarCamara()"
+              >
+                <i class="bi bi-play-fill"></i>
+                Iniciar cámara
+              </button>
+            }
+
+            @if (camaraActiva) {
+              <button
+                type="button"
+                class="btn btn-success"
+                (click)="capturarFoto()"
+              >
+                <i class="bi bi-camera-fill"></i>
+                Capturar foto
+              </button>
+
+              <button
+                type="button"
+                class="btn btn-danger"
+                (click)="detenerCamara()"
+              >
+                <i class="bi bi-stop-fill"></i>
+                Detener
+              </button>
+            }
+          </div>
+        </div>
+      }
+
+      <div class="d-grid gap-2 mt-3">
+        <button
+          class="btn btn-primary-custom"
+          [disabled]="procesando"
+          (click)="reconocerPersona()"
+        >
+          <i class="bi bi-search me-1"></i>
+          {{ procesando ? 'Reconociendo...' : 'Reconocer persona' }}
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-light-custom"
+          (click)="limpiarImagen()"
+        >
+          <i class="bi bi-eraser-fill me-1"></i>
+          Limpiar imagen
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="glass-card">
+      <div class="card-title-row">
+        <div>
+          <h4>Resultado del reconocimiento</h4>
+          <p>Datos de la persona identificada por Python Flask.</p>
+        </div>
+      </div>
+
+      <div class="photo-preview mb-4">
+        @if (previewUrl) {
+          <img [src]="previewUrl" alt="Imagen para reconocimiento" />
+        } @else {
+          <div>
+            <i class="bi bi-image"></i>
+            <p>Sin imagen seleccionada</p>
+          </div>
+        }
+      </div>
+
+      @if (resultadoPersona) {
+        <div class="recognition-result result-success">
+          <div class="result-person">
+            <div class="result-icon">
+              <i class="bi bi-person-check-fill"></i>
+            </div>
+
+            <div class="result-data">
+              <h4>
+                {{ resultadoPersona.nombres }} {{ resultadoPersona.apellidos }}
+              </h4>
+
+              <p><strong>Tipo:</strong> {{ resultadoPersona.tipoPersona }}</p>
+              <p><strong>DNI:</strong> {{ resultadoPersona.dni }}</p>
+              <p><strong>Detalle:</strong> {{ obtenerDetallePersona(resultadoPersona) }}</p>
+              <p>
+                <strong>Estado:</strong>
+                {{ resultadoPersona.estado ? 'Activo' : 'Inactivo' }}
+              </p>
+              <p>
+                <strong>Rostro registrado:</strong>
+                {{ resultadoPersona.rostroRegistrado ? 'Sí' : 'No' }}
+              </p>
+            </div>
+          </div>
+
+          <div class="confidence-box">
+            Coincidencia encontrada |
+            Confianza:
+            {{
+              resultadoConfidence !== null
+                ? resultadoConfidence.toFixed(2)
+                : 'No disponible'
+            }}
+          </div>
+        </div>
+      } @else {
+        <div class="recognition-result">
+          <div class="empty-result">
+            <i class="bi bi-person-bounding-box"></i>
+            <h5>Esperando reconocimiento</h5>
+            <p>Sube una imagen o captura una foto y presiona Reconocer persona.</p>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<section class="glass-card mt-4">
+  <div class="card-title-row">
+    <div>
+      <h4>Historial de asistencias</h4>
+      <p>Registros guardados en la base de datos.</p>
+    </div>
+
+    <button class="btn btn-light-custom" (click)="cargarAsistencias()">
+      <i class="bi bi-arrow-clockwise me-1"></i>
+      Actualizar
+    </button>
+  </div>
+
+  @if (cargandoAsistencias) {
+    <div class="alert alert-info">
+      Cargando asistencias...
+    </div>
+  } @else if (asistencias.length === 0) {
+    <div class="text-muted">
+      Todavía no hay asistencias registradas.
+    </div>
+  } @else {
+    <div class="table-responsive">
+      <table class="table custom-table align-middle">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Persona</th>
+            <th>Tipo</th>
+            <th>Fecha</th>
+            <th>Hora</th>
+            <th>Estado</th>
+            <th>Método</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (asistencia of obtenerAsistenciasOrdenadas(); track asistencia.id) {
+            <tr>
+              <td>{{ asistencia.id }}</td>
+
+              <td>
+                <div class="person-name">
+                  {{ asistencia.persona?.nombres || '' }}
+                  {{ asistencia.persona?.apellidos || '' }}
+                </div>
+
+                <div class="person-sub">
+                  DNI: {{ asistencia.persona?.dni || '-' }}
+                </div>
+              </td>
+
+              <td>
+                <span
+                  class="badge-custom"
+                  [class.badge-student]="asistencia.persona?.tipoPersona === 'ESTUDIANTE'"
+                  [class.badge-teacher]="asistencia.persona?.tipoPersona === 'DOCENTE'"
+                >
+                  {{ asistencia.persona?.tipoPersona || 'SIN TIPO' }}
+                </span>
+              </td>
+
+              <td>{{ asistencia.fecha }}</td>
+              <td>{{ asistencia.hora }}</td>
+
+              <td>
+                <span [class]="obtenerClaseEstado(asistencia.estado)">
+                  {{ asistencia.estado }}
+                </span>
+              </td>
+
+              <td>
+                <span class="badge-method">
+                  {{ asistencia.metodoRegistro }}
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

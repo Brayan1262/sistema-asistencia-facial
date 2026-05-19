@@ -1,0 +1,197 @@
+<main class="login-page">
+  <button
+    type="button"
+    class="btn-theme-login"
+    (click)="cambiarTema()"
+    [title]="temaOscuro ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+  >
+    <i [class]="temaOscuro ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'"></i>
+    <span>{{ temaOscuro ? 'Modo claro' : 'Modo oscuro' }}</span>
+  </button>
+
+  <section class="school-background">
+
+<div class="bubble bubble-1"></div>
+<div class="bubble bubble-2"></div>
+<div class="bubble bubble-3"></div>
+<div class="bubble bubble-4"></div>
+<div class="bubble bubble-5"></div>
+<div class="bubble bubble-6"></div>
+
+<div class="motivational-card phrase-one">
+  <i class="bi bi-camera-fill"></i>
+  <div>
+    <strong>Marca asistencia desde la web</strong>
+    <span>Rápido, moderno y sin contacto físico.</span>
+  </div>
+</div>
+
+<div class="motivational-card phrase-two">
+  <i class="bi bi-shield-lock-fill"></i>
+  <div>
+    <strong>Identificación más segura</strong>
+    <span>El reconocimiento facial ayuda a evitar registros falsos.</span>
+  </div>
+</div>
+
+<div class="motivational-card phrase-four">
+  <i class="bi bi-globe2"></i>
+  <div>
+    <strong>Acceso desde cualquier navegador</strong>
+    <span>Un sistema web preparado para instituciones educativas.</span>
+  </div>
+</div>
+
+    <div class="floating-character student-character">
+  <div class="character-card">
+    <div class="character-head">
+      <div class="hair hair-student"></div>
+      <div class="face">
+        <span class="eye left"></span>
+        <span class="eye right"></span>
+        <span class="smile"></span>
+      </div>
+    </div>
+    <div class="character-body student-body"></div>
+    <div class="character-label">
+      <i class="bi bi-mortarboard-fill"></i>
+      Estudiante
+    </div>
+  </div>
+</div>
+
+<div class="floating-character teacher-character">
+  <div class="character-card">
+    <div class="character-head">
+      <div class="hair hair-teacher"></div>
+      <div class="face">
+        <span class="eye left"></span>
+        <span class="eye right"></span>
+        <span class="smile"></span>
+      </div>
+    </div>
+    <div class="character-body teacher-body"></div>
+    <div class="character-label">
+      <i class="bi bi-person-workspace"></i>
+      Docente
+    </div>
+  </div>
+</div>
+
+<div class="floating-icon icon-one">
+  <i class="bi bi-stars"></i>
+</div>
+
+<div class="floating-icon icon-two">
+  <i class="bi bi-patch-check-fill"></i>
+</div>
+
+<div class="floating-icon icon-three">
+  <i class="bi bi-emoji-smile-fill"></i>
+</div>
+
+    <div class="sun-or-moon">
+      <i [class]="temaOscuro ? 'bi bi-moon-stars-fill' : 'bi bi-brightness-high-fill'"></i>
+    </div>
+
+    <div class="school-card-bg">
+      <div class="school-roof"></div>
+
+      <div class="school-building">
+        <div class="school-title">
+          Colegio Digital
+        </div>
+
+        <div class="windows-row">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+
+        <div class="windows-row">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+
+        <div class="school-door"></div>
+      </div>
+
+      <div class="school-ground"></div>
+    </div>
+
+    <div class="floating-badge badge-one">
+      <i class="bi bi-person-bounding-box"></i>
+      Reconocimiento facial
+    </div>
+
+    <div class="floating-badge badge-two">
+      <i class="bi bi-calendar-check-fill"></i>
+      Asistencia automática
+    </div>
+
+    <div class="floating-badge badge-three">
+      <i class="bi bi-shield-check"></i>
+      Control seguro
+    </div>
+  </section>
+
+  <section class="login-card">
+    <div class="login-logo">
+      <i class="bi bi-person-bounding-box"></i>
+    </div>
+
+    <h1>Sistema de Asistencia Facial</h1>
+    <p>Acceso administrativo</p>
+
+    <form class="mt-4" (ngSubmit)="iniciarSesion()">
+      <div class="mb-3 text-start">
+        <label class="form-label">Usuario</label>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Ingresa tu usuario"
+          [(ngModel)]="usuario"
+          name="usuario"
+        />
+      </div>
+
+      <div class="mb-3 text-start">
+        <label class="form-label">Contraseña</label>
+
+        <div class="input-group">
+          <input
+            [type]="mostrarPassword ? 'text' : 'password'"
+            class="form-control"
+            placeholder="Ingresa tu contraseña"
+            [(ngModel)]="password"
+            name="password"
+          />
+
+          <button
+            type="button"
+            class="btn btn-outline-secondary btn-eye-password"
+            (click)="mostrarPassword = !mostrarPassword"
+          >
+            <i [class]="mostrarPassword ? 'bi bi-eye-slash-fill' : 'bi bi-eye-fill'"></i>
+          </button>
+        </div>
+      </div>
+
+      @if (error) {
+        <div class="alert alert-danger py-2">
+          {{ error }}
+        </div>
+      }
+
+      <button class="btn btn-primary-login w-100 fw-bold">
+        <i class="bi bi-lock-fill me-2"></i>
+        Iniciar sesión
+      </button>
+    </form>
+
+    <small class="login-help d-block mt-3">
+      Usuario: <strong>admin</strong> | Contraseña: <strong>admin123</strong>
+    </small>
+  </section>
+</main>

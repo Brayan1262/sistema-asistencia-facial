@@ -1,0 +1,366 @@
+@if (error) {
+  <div class="alert alert-danger">
+    {{ error }}
+  </div>
+}
+
+@if (mensaje) {
+  <div class="alert alert-success">
+    {{ mensaje }}
+  </div>
+}
+
+<section class="row g-4 mb-4">
+  <div class="col-md-3">
+    <div class="mini-card">
+      <i class="bi bi-people-fill text-primary"></i>
+      <div>
+        <strong>{{ totalPersonas }}</strong>
+        <span>Total personas</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="mini-card">
+      <i class="bi bi-mortarboard-fill text-success"></i>
+      <div>
+        <strong>{{ totalEstudiantes }}</strong>
+        <span>Estudiantes</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="mini-card">
+      <i class="bi bi-person-workspace text-primary"></i>
+      <div>
+        <strong>{{ totalDocentes }}</strong>
+        <span>Docentes</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="mini-card">
+      <i class="bi bi-person-check-fill text-warning"></i>
+      <div>
+        <strong>{{ totalActivos }}</strong>
+        <span>Activos</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="row g-4">
+  <div class="col-lg-5">
+    <div class="glass-card">
+      <div class="card-title-row">
+        <div>
+          <h4>
+            {{ personaEditandoId ? 'Editar persona' : 'Registrar persona' }}
+          </h4>
+          <p>
+            {{
+              personaEditandoId
+                ? 'Modifica los datos de la persona seleccionada.'
+                : 'Registra estudiantes o docentes desde un solo formulario.'
+            }}
+          </p>
+        </div>
+      </div>
+
+      <form (ngSubmit)="guardarPersona()">
+        <div class="mb-3">
+          <label class="form-label">Tipo de persona</label>
+          <select class="form-select" [(ngModel)]="formulario.tipoPersona" name="tipoPersona">
+            <option value="ESTUDIANTE">Estudiante</option>
+            <option value="DOCENTE">Docente</option>
+          </select>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Nombres</label>
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Ej. María Fernanda"
+              [(ngModel)]="formulario.nombres"
+              name="nombres"
+            />
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Apellidos</label>
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Ej. López Ruiz"
+              [(ngModel)]="formulario.apellidos"
+              name="apellidos"
+            />
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">DNI</label>
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Ej. 87654321"
+              [(ngModel)]="formulario.dni"
+              name="dni"
+            />
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Correo</label>
+            <input
+              type="email"
+              class="form-control"
+              placeholder="correo@colegio.edu.pe"
+              [(ngModel)]="formulario.correo"
+              name="correo"
+            />
+          </div>
+
+          <div class="col-md-12">
+            <label class="form-label">Teléfono</label>
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Ej. 987654321"
+              [(ngModel)]="formulario.telefono"
+              name="telefono"
+            />
+          </div>
+        </div>
+
+        @if (formulario.tipoPersona === 'ESTUDIANTE') {
+          <div class="dynamic-box mt-4">
+            <h6>
+              <i class="bi bi-mortarboard-fill"></i>
+              Datos académicos del estudiante
+            </h6>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Grado</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  placeholder="Ej. 4to"
+                  [(ngModel)]="formulario.grado"
+                  name="grado"
+                />
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Sección</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  placeholder="Ej. B"
+                  [(ngModel)]="formulario.seccion"
+                  name="seccion"
+                />
+              </div>
+            </div>
+          </div>
+        }
+
+        @if (formulario.tipoPersona === 'DOCENTE') {
+          <div class="dynamic-box mt-4">
+            <h6>
+              <i class="bi bi-person-workspace"></i>
+              Datos laborales del docente
+            </h6>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Especialidad</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  placeholder="Ej. Matemática"
+                  [(ngModel)]="formulario.especialidad"
+                  name="especialidad"
+                />
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Cargo</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  placeholder="Ej. Docente tutor"
+                  [(ngModel)]="formulario.cargo"
+                  name="cargo"
+                />
+              </div>
+            </div>
+          </div>
+        }
+
+        <button class="btn btn-primary-custom w-100 mt-4" [disabled]="guardando">
+          <i class="bi bi-save-fill me-1"></i>
+          {{
+            guardando
+              ? 'Guardando...'
+              : personaEditandoId
+                ? 'Guardar cambios'
+                : 'Registrar persona'
+          }}
+        </button>
+
+        @if (personaEditandoId) {
+          <button
+            type="button"
+            class="btn btn-light-custom w-100 mt-2"
+            (click)="cancelarEdicion()"
+          >
+            <i class="bi bi-x-circle me-1"></i>
+            Cancelar edición
+          </button>
+        }
+      </form>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="glass-card">
+      <div class="card-title-row">
+        <div>
+          <h4>Personas registradas</h4>
+          <p>Lista general de estudiantes y docentes.</p>
+        </div>
+
+        <button class="btn btn-light-custom" (click)="cargarPersonas()">
+          <i class="bi bi-arrow-clockwise me-1"></i>
+          Actualizar
+        </button>
+      </div>
+
+      <div class="filter-row">
+        <button
+          class="filter-btn"
+          [class.active]="filtroActual === 'TODOS'"
+          (click)="aplicarFiltro('TODOS')"
+        >
+          Todos
+        </button>
+
+        <button
+          class="filter-btn"
+          [class.active]="filtroActual === 'ESTUDIANTE'"
+          (click)="aplicarFiltro('ESTUDIANTE')"
+        >
+          Estudiantes
+        </button>
+
+        <button
+          class="filter-btn"
+          [class.active]="filtroActual === 'DOCENTE'"
+          (click)="aplicarFiltro('DOCENTE')"
+        >
+          Docentes
+        </button>
+      </div>
+
+      @if (cargando) {
+        <div class="alert alert-info">
+          Cargando personas...
+        </div>
+      } @else if (personasFiltradas.length === 0) {
+        <div class="text-muted py-4">
+          No hay personas registradas para este filtro.
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table custom-table align-middle">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Persona</th>
+                <th>DNI</th>
+                <th>Tipo</th>
+                <th>Detalle</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              @for (persona of personasFiltradas; track persona.id) {
+                <tr>
+                  <td>{{ persona.id }}</td>
+
+                  <td>
+                    <div class="person-name">
+                      {{ persona.nombres }} {{ persona.apellidos }}
+                    </div>
+                    <div class="person-sub">
+                      {{ persona.correo || 'Sin correo' }}
+                      |
+                      {{ persona.rostroRegistrado ? 'Rostro registrado' : 'Sin rostro' }}
+                    </div>
+                  </td>
+
+                  <td>{{ persona.dni }}</td>
+
+                  <td>
+                    <span
+                      class="badge-custom"
+                      [class.badge-student]="persona.tipoPersona === 'ESTUDIANTE'"
+                      [class.badge-teacher]="persona.tipoPersona === 'DOCENTE'"
+                    >
+                      {{ persona.tipoPersona === 'ESTUDIANTE' ? 'Estudiante' : 'Docente' }}
+                    </span>
+                  </td>
+
+                  <td>{{ obtenerDetallePersona(persona) }}</td>
+
+                  <td>
+                    <span
+                      class="badge"
+                      [class.text-bg-success]="persona.estado"
+                      [class.text-bg-secondary]="!persona.estado"
+                    >
+                      {{ persona.estado ? 'Activo' : 'Inactivo' }}
+                    </span>
+                  </td>
+
+                  <td>
+                    <div class="table-actions">
+                      <button
+                        class="btn btn-sm btn-light-custom"
+                        (click)="editarPersona(persona)"
+                      >
+                        <i class="bi bi-pencil-square"></i>
+                        Editar
+                      </button>
+
+                      <button
+                        class="btn btn-sm"
+                        [class.btn-outline-danger]="persona.estado"
+                        [class.btn-outline-success]="!persona.estado"
+                        (click)="cambiarEstadoPersona(persona)"
+                      >
+                        <i
+                          class="bi"
+                          [class.bi-person-x-fill]="persona.estado"
+                          [class.bi-person-check-fill]="!persona.estado"
+                        ></i>
+                        {{ persona.estado ? 'Desactivar' : 'Activar' }}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+</section>

@@ -1,0 +1,259 @@
+.glass-card {
+  background: rgba(255,255,255,0.9);
+  border: 1px solid rgba(255,255,255,0.75);
+  border-radius: 28px;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
+  padding: 28px;
+}
+
+.card-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.card-title-row h4 {
+  margin: 0;
+  font-weight: 900;
+}
+
+.card-title-row p {
+  margin: 5px 0 0;
+  color: #64748b;
+}
+
+.form-control,
+.form-select {
+  border-radius: 14px;
+  padding: 12px 14px;
+  border: 1px solid #dbe4ee;
+}
+
+.btn-primary-custom {
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: white;
+  border: none;
+  border-radius: 15px;
+  padding: 12px 18px;
+  font-weight: 900;
+  box-shadow: 0 12px 22px rgba(37, 99, 235, 0.22);
+  transition: 0.2s ease;
+}
+
+.btn-primary-custom:hover {
+  color: white;
+  transform: translateY(-2px);
+}
+
+.btn-light-custom {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: none;
+  border-radius: 14px;
+  padding: 10px 15px;
+  font-weight: 900;
+  transition: 0.2s ease;
+}
+
+.btn-light-custom:hover {
+  background: #bae6fd;
+  color: #075985;
+}
+
+.manual-attendance-box {
+  background: #f8fafc;
+  border: 1px solid #dbe4ee;
+  border-radius: 22px;
+  padding: 22px;
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
+}
+
+.manual-attendance-box h5 {
+  font-weight: 900;
+  margin-bottom: 5px;
+}
+
+.manual-attendance-box p {
+  color: #64748b;
+  margin-bottom: 12px;
+}
+
+.report-box {
+  background: rgba(255,255,255,0.92);
+  border-radius: 26px;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
+  padding: 28px;
+  text-align: center;
+  border: 1px solid rgba(255,255,255,0.8);
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+  transition: 0.25s ease;
+}
+
+.report-box:hover {
+  transform: translateY(-4px);
+}
+
+.report-box i {
+  font-size: 34px;
+  margin-bottom: 6px;
+}
+
+.report-box h2 {
+  font-weight: 900;
+  font-size: 38px;
+  margin: 0;
+}
+
+.report-box p {
+  color: #64748b;
+  font-weight: 800;
+  margin: 0;
+}
+
+.report-blue i,
+.report-blue h2 {
+  color: #2563eb;
+}
+
+.report-green i,
+.report-green h2 {
+  color: #16a34a;
+}
+
+.report-purple i,
+.report-purple h2 {
+  color: #7c3aed;
+}
+
+.report-orange i,
+.report-orange h2 {
+  color: #f59e0b;
+}
+
+.status-box {
+  background: #f8fafc;
+  border: 1px solid #dbe4ee;
+  border-radius: 18px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.status-box strong {
+  font-size: 26px;
+  font-weight: 900;
+}
+
+.custom-table th {
+  background: #eff6ff;
+  color: #475569;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.person-name {
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.person-sub {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.badge-custom {
+  display: inline-block;
+  padding: 6px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.badge-student {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.badge-teacher {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.badge-present {
+  background: #dcfce7;
+  color: #166534;
+  padding: 6px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.badge-tardanza {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 6px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.badge-falta {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 6px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.badge-justificado {
+  background: #e0e7ff;
+  color: #3730a3;
+  padding: 6px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.badge-method {
+  background: #e0f2fe;
+  color: #0369a1;
+  padding: 6px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.estado-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 220px;
+}
+
+.estado-actions select {
+  min-width: 145px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.estado-actions button {
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 8px 10px;
+}
+
+@media (max-width: 768px) {
+  .estado-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

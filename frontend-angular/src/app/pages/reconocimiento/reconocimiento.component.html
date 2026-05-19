@@ -1,0 +1,207 @@
+@if (error) {
+  <div class="alert alert-danger">
+    {{ error }}
+  </div>
+}
+
+@if (mensaje) {
+  <div class="alert alert-success">
+    {{ mensaje }}
+  </div>
+}
+
+<section class="row g-4">
+  <div class="col-lg-5">
+    <div class="glass-card">
+      <div class="card-title-row">
+        <div>
+          <h4>Registrar rostro</h4>
+          <p>Selecciona una persona activa y sube una fotografía frontal.</p>
+        </div>
+      </div>
+
+      @if (cargando) {
+        <div class="alert alert-info">
+          Cargando personas...
+        </div>
+      } @else {
+        <div class="mb-3">
+          <label class="form-label">Persona</label>
+          <select
+            class="form-select"
+            [(ngModel)]="personaSeleccionadaId"
+            name="personaSeleccionadaId"
+            (change)="cambiarPersonaSeleccionada()"
+          >
+            <option [ngValue]="null">Selecciona una persona</option>
+
+            @for (persona of personasActivas; track persona.id) {
+              <option [ngValue]="persona.id">
+                {{ persona.nombres }} {{ persona.apellidos }} - {{ persona.tipoPersona }}
+              </option>
+            }
+          </select>
+        </div>
+
+        @if (personaSeleccionada) {
+          <div class="selected-person-box mb-3">
+            <div>
+              <strong>
+                {{ personaSeleccionada.nombres }} {{ personaSeleccionada.apellidos }}
+              </strong>
+              <p>{{ obtenerDetallePersona(personaSeleccionada) }}</p>
+            </div>
+
+            <span
+              class="badge"
+              [class.text-bg-success]="personaSeleccionada.rostroRegistrado"
+              [class.text-bg-secondary]="!personaSeleccionada.rostroRegistrado"
+            >
+              {{ personaSeleccionada.rostroRegistrado ? 'Rostro registrado' : 'Sin rostro' }}
+            </span>
+          </div>
+        }
+
+        <div class="upload-zone">
+          <input
+            id="fotoRostroAngular"
+            type="file"
+            accept="image/*"
+            class="form-control mb-3"
+            (change)="seleccionarImagen($event)"
+          />
+
+          <i class="bi bi-cloud-arrow-up-fill"></i>
+          <h5>Subir fotografía del rostro</h5>
+          <p>Formato recomendado: JPG o PNG</p>
+        </div>
+
+        <div class="d-grid gap-2 mt-3">
+          <button
+            class="btn btn-primary-custom"
+            [disabled]="guardando"
+            (click)="registrarRostro()"
+          >
+            <i class="bi bi-person-check-fill me-1"></i>
+            {{ guardando ? 'Registrando rostro...' : 'Registrar rostro' }}
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-light-custom"
+            (click)="limpiarImagen()"
+          >
+            <i class="bi bi-eraser-fill me-1"></i>
+            Limpiar imagen
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="glass-card">
+      <div class="card-title-row">
+        <div>
+          <h4>Vista previa</h4>
+          <p>Esta imagen será enviada al microservicio Python.</p>
+        </div>
+      </div>
+
+      <div class="photo-preview">
+        @if (previewUrl) {
+          <img [src]="previewUrl" alt="Vista previa de rostro" />
+        } @else {
+          <div>
+            <i class="bi bi-image"></i>
+            <p>Sin imagen seleccionada</p>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="glass-card mt-4">
+  <div class="card-title-row">
+    <div>
+      <h4>Personas con rostro registrado</h4>
+      <p>Control visual de estudiantes y docentes con imagen facial asociada.</p>
+    </div>
+
+    <button class="btn btn-light-custom" (click)="cargarPersonas()">
+      <i class="bi bi-arrow-clockwise me-1"></i>
+      Actualizar
+    </button>
+  </div>
+
+  @if (personas.length === 0) {
+    <div class="text-muted">
+      No hay personas registradas.
+    </div>
+  } @else {
+    <div class="table-responsive">
+      <table class="table custom-table align-middle">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Persona</th>
+            <th>Tipo</th>
+            <th>Detalle</th>
+            <th>Estado</th>
+            <th>Rostro</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (persona of personas; track persona.id) {
+            <tr>
+              <td>{{ persona.id }}</td>
+
+              <td>
+                <div class="person-name">
+                  {{ persona.nombres }} {{ persona.apellidos }}
+                </div>
+                <div class="person-sub">
+                  DNI: {{ persona.dni || '-' }}
+                </div>
+              </td>
+
+              <td>
+                <span
+                  class="badge-custom"
+                  [class.badge-student]="persona.tipoPersona === 'ESTUDIANTE'"
+                  [class.badge-teacher]="persona.tipoPersona === 'DOCENTE'"
+                >
+                  {{ persona.tipoPersona }}
+                </span>
+              </td>
+
+              <td>{{ obtenerDetallePersona(persona) }}</td>
+
+              <td>
+                <span
+                  class="badge"
+                  [class.text-bg-success]="persona.estado"
+                  [class.text-bg-secondary]="!persona.estado"
+                >
+                  {{ persona.estado ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+
+              <td>
+                <span
+                  class="badge"
+                  [class.text-bg-success]="persona.rostroRegistrado"
+                  [class.text-bg-secondary]="!persona.rostroRegistrado"
+                >
+                  {{ persona.rostroRegistrado ? 'Registrado' : 'Pendiente' }}
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
