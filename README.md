@@ -1,309 +1,113 @@
-# Sistema de Asistencia Facial
+# Sistema de Asistencia Facial 📸
 
-Sistema web de asistencia con reconocimiento facial desarrollado para instituciones educativas.  
-Permite registrar estudiantes y docentes, asociarles una imagen facial, reconocerlos mediante inteligencia artificial, marcar su asistencia automáticamente, generar reportes y administrar el sistema desde un panel dinámico desarrollado con Angular.
+> Sistema web de asistencia con reconocimiento facial desarrollado para instituciones educativas. Permite registrar estudiantes y docentes, asociarles una imagen facial, reconocerlos mediante inteligencia artificial, marcar su asistencia automáticamente, generar reportes y administrar el sistema desde un panel dinámico.
+>
+> ![Java](https://img.shields.io/badge/JAVA-21-ED8B00?style=for-the-badge&logo=java&logoColor=white) ![Spring Boot](https://img.shields.io/badge/SPRING_BOOT-3-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white) ![Angular](https://img.shields.io/badge/ANGULAR-17-DD0031?style=for-the-badge&logo=angular&logoColor=white) ![Python](https://img.shields.io/badge/PYTHON-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white) ![Flask](https://img.shields.io/badge/FLASK-API-000000?style=for-the-badge&logo=flask&logoColor=white) ![OpenCV](https://img.shields.io/badge/OPENCV-AI-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white) ![MySQL](https://img.shields.io/badge/MYSQL-DB-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
 
 ---
 
-## Descripción del proyecto
+## 🚀 Características Principales
 
-Este proyecto tiene como objetivo automatizar el control de asistencia en una institución educativa mediante reconocimiento facial.
+- **Gestión Institucional:** Registro y administración de `ESTUDIANTES` y `DOCENTES` (campos dinámicos según el tipo de persona) con funciones de activación y desactivación.
+- **Reconocimiento Facial con IA:** Registro de rostros y reconocimiento en tiempo real mediante imágenes estáticas o **cámara en vivo** impulsado por OpenCV y Python.
+- **Asistencia Automatizada:** Marcado automático (`PRESENTE`, `TARDANZA`, `FALTA`, `JUSTIFICADO`) validando y bloqueando la duplicidad de asistencia por día.
+- **Dashboard Interactivo:** Panel administrativo con gráficos visuales y resumen estadístico de la población de la institución.
+- **Reportes Avanzados:** Filtros dinámicos (fechas, tipo de persona, estado), exportación directa a **Excel** y generación de versión para imprimir en **PDF**.
+- **Arquitectura Distribuida:** Comunicación fluida entre el frontend, la API principal en Java/Spring Boot y el motor independiente de IA en Python/Flask.
 
-El sistema permite gestionar estudiantes y docentes usando una entidad principal llamada **Persona**. Cada persona puede tener un rostro registrado y posteriormente ser reconocida mediante una imagen o cámara en vivo para marcar su asistencia.
+---
 
-La versión actual del proyecto cuenta con un **frontend principal desarrollado en Angular**, una API principal en **Java Spring Boot**, un microservicio en **Python Flask con OpenCV** y una base de datos **MySQL**.
+## 🛠️ Stack Tecnológico
 
-El proyecto está desarrollado con una arquitectura separada:
+| Capa | Tecnologías |
+| :--- | :--- |
+| **Frontend Web** | HTML5, CSS3, JavaScript, Angular, Bootstrap 5, LocalStorage |
+| **Backend API (Core)** | Java 21, Spring Boot, Spring Data JPA, Maven |
+| **Microservicio IA** | Python 3.12, Flask, OpenCV, NumPy |
+| **Base de Datos** | MySQL (XAMPP) |
+| **Control de Versiones** | Git, GitHub |
 
-``text
-Frontend Angular
-↓
-Backend Java Spring Boot
-↓
-Base de datos MySQL
+---
 
-Objetivo del sistema
+## 🏗️ Arquitectura del Sistema
 
-El objetivo principal del sistema es reemplazar el registro manual de asistencia por un proceso más rápido, moderno y automatizado usando reconocimiento facial.
+El proyecto opera mediante la comunicación en cadena de múltiples servicios independientes:
+```text
+Frontend Web  ➔  Backend Java Spring Boot  ➔  Microservicio Python (Flask + OpenCV)  ➔  MySQL DB
+```
 
-En una institución educativa, la asistencia manual puede generar pérdida de tiempo, errores, registros duplicados o dificultad para consultar reportes. Este sistema busca solucionar ese problema permitiendo que estudiantes y docentes sean reconocidos mediante una imagen o cámara en vivo para registrar su asistencia automáticamente.
+Estructura de directorios principales:
+- `/backend-java`: API REST principal en Spring Boot.
+- `/facial-service-python`: Motor de Inteligencia Artificial para el escaneo y reconocimiento facial.
+- `/frontend`: Interfaz base clásica (HTML/CSS/JS puros).
+- `/frontend-angular`: Interfaz escalable basada en componentes.
+- `/frontend-vue`: Próxima migración planeada a Vue 3.
 
-Además, el sistema busca ofrecer una interfaz moderna, clara y fácil de usar para que el administrador pueda gestionar personas, registrar rostros, controlar asistencias, generar reportes y personalizar el panel desde una aplicación web desarrollada con Angular.
+---
 
-Problema que resuelve
+## ⚙️ Cómo ejecutar el proyecto (Modo Local)
 
-El sistema ayuda a resolver problemas como:
+Para ejecutar el sistema completo se deben iniciar los módulos de forma paralela.
 
-Registro manual lento de asistencia.
-Errores al tomar asistencia.
-Falta de reportes rápidos.
-Dificultad para consultar asistencias por fecha.
-Falta de control visual de estudiantes y docentes registrados.
-Necesidad de automatizar procesos administrativos en instituciones educativas.
-Falta de una interfaz moderna para gestionar asistencia educativa.
-Dificultad para controlar faltas, tardanzas y justificaciones.
-Necesidad de reconocer estudiantes y docentes desde una plataforma web.
-Funcionalidades principales
-Login administrativo.
-Panel de administrador desarrollado con Angular.
-Diseño moderno, dinámico y responsive.
-Modo claro y modo oscuro.
-Botón para cambiar apariencia desde el login y el panel.
-Edición de perfil del administrador.
-Foto y datos del administrador visibles en la barra superior.
-Dashboard con indicadores visuales.
-Registro de estudiantes y docentes.
-Edición de datos de estudiantes y docentes.
-Activación y desactivación de personas.
-Campos dinámicos según el tipo de persona.
-Registro de rostro asociado a una persona.
-Reconocimiento facial mediante imagen.
-Reconocimiento facial mediante cámara en vivo.
-Captura de foto desde el navegador.
-Marcado automático de asistencia.
-Prevención de asistencia duplicada por día.
-Historial de asistencias.
-Estados de asistencia: PRESENTE, TARDANZA, FALTA y JUSTIFICADO.
-Registro manual de faltas.
-Cambio manual de estados de asistencia desde reportes.
-Reportes con filtros por rango de fechas.
-Reportes con filtros por tipo de persona.
-Reportes con filtros por estado de asistencia.
-Exportación de asistencias a Excel.
-Impresión o guardado de reportes en PDF.
-Manejo de errores desde el backend.
-Interfaz web moderna con Bootstrap y Bootstrap Icons.
-Animaciones visuales en el login.
-Fondo dinámico estilo educativo.
-Burbujas, personajes y frases motivadoras en la pantalla de acceso.
-Tecnologías utilizadas
-Frontend principal
-Angular
-TypeScript
-HTML5
-CSS3
-Bootstrap 5
-Bootstrap Icons
-LocalStorage
-SessionStorage
-Cámara web desde el navegador
-Frontend anterior
-HTML5
-CSS3
-JavaScript
-Bootstrap 5
-Bootstrap Icons
-Backend
-Java 21
-Spring Boot
-Spring Web
-Spring Data JPA
-Maven
-Microservicio de reconocimiento facial
-Python 3.12
-Flask
-Flask-CORS
-OpenCV
-NumPy
-Base de datos
-MySQL
-XAMPP
-Control de versiones
-Git
-GitHub
-Arquitectura del sistema
-sistema-asistencia-facial/
-│
-├── backend-java/
-│   └── API REST desarrollada con Spring Boot
-│
-├── facial-service-python/
-│   └── Microservicio Flask para reconocimiento facial
-│
-├── frontend-angular/
-│   └── Frontend principal desarrollado con Angular
-│
-├── frontend/
-│   └── Primera versión web con HTML, CSS y JavaScript
-│
-├── database/
-│   └── Archivos relacionados con la base de datos
-│
-├── docs/
-│   └── Documentación del proyecto
-│
-├── README.md
-└── .gitignore
-Frontend Angular
+### 1. Base de Datos (MySQL)
+Configura e inicia MySQL (por ejemplo, usando XAMPP):
+- **Host:** `localhost`
+- **Puerto:** `3308`
+- **Database:** `asistencia_db`
 
-La versión principal del sistema se encuentra en:
+### 2. Levantar API Backend (Java)
+Desde una terminal en la carpeta principal:
+```bash
+cd backend-java
+.\mvnw spring-boot:run
+```
+> La API estará disponible en `http://localhost:8080`.
 
-frontend-angular/
+### 3. Levantar Microservicio IA (Python)
+Desde una nueva terminal:
+```bash
+cd facial-service-python
+python -m venv venv
+.\venv\Scripts\activate
+pip install -r requirements.txt
+python app.py
+```
+> El motor facial correrá en `http://localhost:5001`. (Verifica que funcione en `http://localhost:5001/health`).
 
-Esta carpeta contiene la interfaz web moderna del sistema, desarrollada con Angular.
+### 4. Lanzar Frontend (Panel de Control)
+Puedes usar **Live Server** (Extensión de VSCode) para abrir el archivo base:
+`frontend/personas.html`
 
-Módulos implementados:
+**Credenciales de administrador por defecto:**
+- **Usuario:** `admin`
+- **Contraseña:** `admin123`
 
-Login
-Dashboard
-Personas
-Reconocimiento
-Asistencia
-Reportes
-Perfil
-Modo claro / oscuro
+---
 
-Estructura principal del frontend Angular:
+## 🔐 Seguridad y Privacidad
 
-frontend-angular/src/app/
-│
-├── core/
-│   ├── models/
-│   │   ├── persona.model.ts
-│   │   └── asistencia.model.ts
-│   │
-│   └── services/
-│       ├── auth.service.ts
-│       ├── persona.service.ts
-│       ├── asistencia.service.ts
-│       └── facial.service.ts
-│
-├── layouts/
-│   └── admin-layout/
-│
-├── pages/
-│   ├── login/
-│   ├── dashboard/
-│   ├── personas/
-│   ├── reconocimiento/
-│   ├── asistencia/
-│   ├── reportes/
-│   └── perfil/
-│
-├── app.routes.ts
-├── app.config.ts
-└── app.ts
-Módulos del sistema
-Login administrativo
+- **Almacenamiento de Rostros:** Las imágenes de entrenamiento base se almacenan en `facial-service-python/faces/` y se excluyen en el `.gitignore` para proteger la privacidad.
+- **Reconocimiento en Vivo:** Las capturas de la cámara en vivo para la asistencia se almacenan en memoria temporal durante milisegundos para su análisis y no persisten.
 
-El sistema cuenta con una pantalla de acceso para el administrador.
+---
 
-Credenciales de demostración:
+## 🚀 Próximas Mejoras (Roadmap)
 
-Usuario: admin
-Contraseña: admin123
+- [ ] Consolidar la migración completa del Frontend base hacia **Vue 3 + Vite**.
+- [ ] Implementar seguridad **JWT** y roles definidos mediante `Spring Security` en el backend.
+- [ ] Agregar gestión avanzada de **Cursos, Aulas y Horarios**.
+- [ ] Optimizar el algoritmo de OpenCV agregando detección de rostros en la interfaz antes de realizar la captura de fotos.
+- [ ] Despliegue de la arquitectura completa en Docker (Docker Compose multi-servicios) y plataformas Cloud.
 
-La sesión se mantiene usando sessionStorage.
-Si no existe una sesión activa, el panel principal permanece protegido.
+---
 
-El login incluye:
+## 👨‍💻 Autor
 
-Validación de usuario y contraseña.
-Botón para mostrar u ocultar contraseña.
-Diseño moderno.
-Fondo animado con estilo educativo.
-Docente y estudiante decorativos creados con HTML y CSS.
-Burbujas flotantes.
-Frases motivadoras.
-Cambio entre modo claro y modo oscuro.
-Animaciones suaves en el panel de acceso.
-Administrador dinámico
+**Brayan Jair Chavez Oscor**
+*Proyecto Académico - Ingeniería de Sistemas*
 
-El administrador puede modificar desde el módulo Perfil:
+[![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Brayan1262)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/brayan-chavez-218088334/)
+[![Portfolio](https://img.shields.io/badge/Portfolio-000000?style=for-the-badge&logo=web&logoColor=white)](https://brayan1262.github.io/portafolio-brayan/)
 
-Nombres
-Apellidos
-Correo electrónico
-Institución
-Cargo
-Teléfono
-Descripción
-Foto de perfil
-
-Los datos se guardan usando localStorage, por lo que se mantienen aunque el navegador se recargue.
-
-Además, la información del administrador se muestra en la barra superior del panel junto al botón de modo claro/oscuro y el botón de cerrar sesión.
-
-Dashboard principal
-
-El dashboard muestra un resumen general del sistema:
-
-Total de personas registradas.
-Total de estudiantes.
-Total de docentes.
-Total de personas activas.
-Total de rostros registrados.
-Total de asistencias del día.
-Conexión con el backend Spring Boot.
-
-El dashboard obtiene los datos reales desde la API del backend Java.
-
-Registro facial
-
-Cada persona puede tener un rostro registrado.
-
-Flujo:
-
-Seleccionar persona registrada
-↓
-Subir imagen del rostro
-↓
-Enviar imagen al microservicio Python
-↓
-Guardar imagen en la carpeta faces/
-↓
-Actualizar en MySQL que la persona tiene rostro registrado
-
-Ejemplo de archivo facial:
-
-persona_1_estudiante.jpg
-persona_2_docente.jpg
-Reconocimiento facial con imagen
-
-El sistema permite subir una imagen para reconocer a una persona.
-
-Flujo:
-
-Subir imagen
-↓
-Python recibe la imagen
-↓
-OpenCV compara con los rostros registrados
-↓
-Si encuentra coincidencia, devuelve el ID de la persona
-↓
-Angular consulta los datos de la persona en Spring Boot
-↓
-Se muestran los datos de la persona reconocida
-↓
-Se registra la asistencia automáticamente
-Reconocimiento facial con cámara en vivo
-
-El sistema permite usar la cámara del navegador desde el módulo de asistencia.
-
-Flujo:
-
-Activar cámara
-↓
-Permitir acceso a la cámara
-↓
-Capturar foto
-↓
-Enviar captura temporal a Python
-↓
-Comparar con rostro registrado
-↓
-Reconocer persona
-↓
-Registrar asistencia
-
-La captura tomada desde la cámara no se guarda permanentemente.
-Solo se usa de forma temporal para comparar el rostro y registrar asistencia.
-
-Autor
-
-Desarrollado por:
-
-Brayan Jair Chavez Oscor
-
-Proyecto académico de Ingeniería de Sistemas.
+> *Este proyecto demuestra la integración exitosa de Inteligencia Artificial (Visión Computacional) en aplicaciones web empresariales modernas.*
